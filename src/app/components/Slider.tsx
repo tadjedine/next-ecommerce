@@ -1,4 +1,6 @@
-function LoginPage() {
+"use client"
+
+function Slider() {
     return (
         <div>
             
@@ -6,4 +8,4 @@ function LoginPage() {
     )
 }
 
-export default LoginPage
+export default Slider
