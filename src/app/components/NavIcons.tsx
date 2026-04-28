@@ -16,14 +16,14 @@ function NavIcons() {
 
 
     //Temmporary
-    const LoggedIn = false
+    const LoggedIn = true
 
     function handleProfile(){
         if (!LoggedIn) {
             router.push('/login')
-
-            setIsProfileOpen((prev)=> !prev);
+            return
         }
+        setIsProfileOpen((prev)=> !prev);
     }
     return (
         <div className="flex items-center gap-4 xl:gap-6 relative">

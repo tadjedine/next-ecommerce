@@ -14,7 +14,8 @@ const config: Config = {
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
       colors:{
-        CartRed:"#F35C71",
+        // CartRed:"#F35C71",
+        CartRed:"##E43023",
       }
     },
   },
