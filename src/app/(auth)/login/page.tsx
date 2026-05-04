@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 function LoginPage() {
@@ -10,6 +11,8 @@ function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    
+    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -17,9 +20,33 @@ function LoginPage() {
         
         //  API call
         try {
-            //  login logic 
-            console.log({ email, password, rememberMe });
-            await new Promise(resolve => setTimeout(resolve, 1000));
+             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/auth/login`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({ 
+                    email, 
+                    password,
+                    // remember: rememberMe // To be supported by backend LoginRequest Later
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to login");
+            }
+
+            const data = await response.json();
+            console.log("Login successful:", data);
+            
+            // Save token to localStorage, cookies, or state management 
+            localStorage.setItem("token", data.token);
+
+            // Redirect user
+             router.push('/');
+            
         } catch (error) {
             console.error(error);
         } finally {
@@ -58,7 +85,7 @@ function LoginPage() {
                             <input 
                                 id="email"
                                 type="email" 
-                                placeholder="john@example.com" 
+                                placeholder="yourEmail@example.com" 
                                 className="w-full ring-1 ring-gray-300 rounded-md py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-CartRed transition-all"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
