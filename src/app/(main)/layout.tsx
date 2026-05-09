@@ -1,5 +1,8 @@
+import { MantineProvider } from '@mantine/core';
+import '@mantine/core/styles.css';
+
 import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import Footer from "../components/Footer/Footer";
 
 export default function MainLayout({
     children,
@@ -10,7 +13,9 @@ export default function MainLayout({
         <>
             <Navbar/>
             {children}
-            <Footer/>
+            <MantineProvider>
+                <Footer/>
+            </MantineProvider>
         </>
     )
     
