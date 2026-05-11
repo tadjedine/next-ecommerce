@@ -1,50 +1,108 @@
 "use client";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { mockHeroSlides } from "@/lib/mock/dummyData";
 
 export default function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
+    if (isHovered) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % mockHeroSlides.length);
-    }, 5000);
+      setCurrentSlide((prev) => (prev === mockHeroSlides.length - 1 ? 0 : prev + 1));
+    }, 4000);
     return () => clearInterval(timer);
-  }, []);
+  }, [isHovered]);
+
+  const nextSlide = () => setCurrentSlide((prev) => (prev === mockHeroSlides.length - 1 ? 0 : prev + 1));
+  const prevSlide = () => setCurrentSlide((prev) => (prev === 0 ? mockHeroSlides.length - 1 : prev - 1));
 
   return (
-    <div className="relative w-full h-[60vh] md:h-[80vh] overflow-hidden bg-orange-50">
-      {mockHeroSlides.map((slide, index) => (
-        <div 
-          key={slide.id} 
-          className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0"}`}
+    <div 
+      className="relative w-full h-[600px] md:h-[700px] overflow-hidden bg-hero"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentSlide}
+          initial={{ opacity: 0, x: 80 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -80 }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
+          className="absolute inset-0 flex flex-col md:flex-row max-w-7xl mx-auto px-6 items-center pt-24 pb-12 md:py-0"
         >
-          {/* Split layout to match your design image exactly */}
-          <div className="flex flex-col md:flex-row h-full">
-            <div className="w-full md:w-1/2 flex flex-col justify-center items-center md:items-start p-8 md:pl-24 text-center md:text-left h-1/2 md:h-full z-20">
-              <p className="text-lg md:text-xl mb-4 text-gray-700">{slide.subtext}</p>
-              <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-8 leading-tight">{slide.headline}</h2>
-              <Link href={slide.ctaLink} className="bg-black text-white px-8 py-3 font-medium hover:bg-gray-800 transition-colors">
-                {slide.ctaText}
-              </Link>
+          {/* Left half */}
+          <div className="w-full md:w-1/2 flex flex-col items-start justify-center h-full z-10">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface border border-border-soft mb-6 shadow-sm">
+              <Sparkles size={16} className="text-primary" />
+              <span className="text-sm font-medium text-text-muted">Featured</span>
             </div>
-            <div className="w-full md:w-1/2 relative h-1/2 md:h-full">
-              <Image src={slide.image} alt={slide.headline} fill className="object-cover object-center" priority={index === 0} sizes="50vw" />
-            </div>
+            
+            <h1 className="text-5xl md:text-6xl font-extrabold text-text-primary leading-tight mb-6 tracking-tight">
+              {mockHeroSlides[currentSlide].headline.split(' ').map((word, i) => (
+                <span key={i} className={i === 1 ? "text-primary" : ""}>
+                  {word}{" "}
+                </span>
+              ))}
+            </h1>
+            
+            <p className="text-lg text-text-muted mb-8 max-w-md">
+              {mockHeroSlides[currentSlide].subtext}
+            </p>
+            
+            <Link 
+              href={mockHeroSlides[currentSlide].ctaLink}
+              className="px-8 py-3.5 bg-primary text-white rounded-full font-bold hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20"
+            >
+              {mockHeroSlides[currentSlide].ctaText}
+            </Link>
           </div>
-        </div>
-      ))}
 
-      {/* Navigation Dots */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-3">
-        {mockHeroSlides.map((_, index) => (
+          {/* Right half */}
+          <div className="hidden md:flex w-full md:w-1/2 h-full relative items-center justify-center p-8 z-10">
+             <div className="relative w-full aspect-square max-w-md rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+               <Image 
+                 src={mockHeroSlides[currentSlide].image}
+                 alt={mockHeroSlides[currentSlide].headline}
+                 fill
+                 className="object-cover"
+               />
+               {currentSlide === 0 && (
+                 <div className="absolute bottom-6 left-6 bg-surface rounded-2xl px-5 py-3 shadow-lg font-bold text-primary text-xl">
+                   $49.99
+                 </div>
+               )}
+             </div>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Navigation Arrows */}
+      <button 
+        onClick={prevSlide}
+        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 hover:bg-white text-text-primary flex items-center justify-center shadow-md backdrop-blur transition-all z-20"
+      >
+        <ChevronLeft size={24} />
+      </button>
+      <button 
+        onClick={nextSlide}
+        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 hover:bg-white text-text-primary flex items-center justify-center shadow-md backdrop-blur transition-all z-20"
+      >
+        <ChevronRight size={24} />
+      </button>
+
+      {/* Dots */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+        {mockHeroSlides.map((_, idx) => (
           <button
-            key={index}
-            onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full border-2 border-black transition-colors ${index === currentSlide ? "bg-black" : "bg-transparent"}`}
-            aria-label={`Go to slide ${index + 1}`}
+            key={idx}
+            onClick={() => setCurrentSlide(idx)}
+            className={`w-3 h-3 rounded-full transition-all ${currentSlide === idx ? "bg-primary w-8" : "bg-primary/30"}`}
           />
         ))}
       </div>

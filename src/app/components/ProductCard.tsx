@@ -1,24 +1,26 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Product } from "@/lib/mock/dummyData"; // To be deleted
+import { Product } from "@/lib/mock/dummyData";
+import { HoverLift } from "./motion/HoverLift";
+import { Heart } from "lucide-react";
 
 export default function ProductCard({ product }: { product: Product }) {
   return (
-    <div className="group flex flex-col gap-3 relative">
+    <HoverLift className="group flex flex-col gap-3 relative bg-surface border border-border-soft rounded-2xl p-3 h-full">
       {/* Badges */}
       {product.badge && (
-        <div className="absolute top-2 left-2 z-10 bg-black text-white text-xs font-bold px-2 py-1 uppercase tracking-wider">
+        <div className="absolute top-5 left-5 z-10 bg-accent text-white text-xs font-bold px-3 py-1 rounded-full shadow-md uppercase tracking-wider">
           {product.badge}
         </div>
       )}
       
-      {/* Wishlist Icon (Mock) */}
-      <button className="absolute top-2 right-2 z-10 p-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:text-red-500">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+      {/* Wishlist Icon */}
+      <button className="absolute top-5 right-5 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:text-red-500 text-text-muted">
+        <Heart size={18} />
       </button>
 
       {/* Image */}
-      <Link href={`/product/${product.slug}`} className="relative aspect-[4/5] w-full overflow-hidden bg-gray-100">
+      <Link href={`/products/${product.slug}`} className="relative aspect-[4/5] w-full overflow-hidden bg-bg-base rounded-xl">
         <Image 
           src={product.image} 
           alt={product.name} 
@@ -29,27 +31,27 @@ export default function ProductCard({ product }: { product: Product }) {
       </Link>
 
       {/* Details */}
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-2 mt-2 flex-grow">
         <div className="flex justify-between items-start">
-          <Link href={`/product/${product.slug}`} className="text-sm font-medium hover:underline line-clamp-1">
+          <Link href={`/products/${product.slug}`} className="text-sm font-semibold text-text-primary hover:text-primary line-clamp-1 transition-colors">
             {product.name}
           </Link>
-          <div className="flex items-center text-xs text-gray-500 gap-1 ml-2 shrink-0">
-            ★ {product.rating} <span className="hidden sm:inline">({product.review_count})</span>
+          <div className="flex items-center text-xs text-text-muted gap-1 ml-2 shrink-0 bg-bg-base px-2 py-1 rounded-lg">
+            <span className="text-accent">★</span> {product.rating}
           </div>
         </div>
-        <div className="flex gap-2 items-center">
-          <span className="font-semibold">${product.price.toFixed(2)}</span>
+        <div className="flex gap-2 items-center mt-auto pt-1">
+          <span className="font-bold text-primary">${product.price.toFixed(2)}</span>
           {product.original_price && (
-            <span className="text-sm text-gray-400 line-through">${product.original_price.toFixed(2)}</span>
+            <span className="text-xs text-text-muted line-through">${product.original_price.toFixed(2)}</span>
           )}
         </div>
       </div>
 
       {/* Add to Cart CTA */}
-      <button className="w-full py-2.5 border border-black text-sm font-medium transition-colors hover:bg-black hover:text-white">
+      <button className="w-full mt-2 py-2.5 bg-bg-base text-primary text-sm font-semibold rounded-xl transition-colors hover:bg-primary hover:text-white">
         Add to Cart
       </button>
-    </div>
+    </HoverLift>
   );
 }

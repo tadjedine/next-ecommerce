@@ -1,11 +1,15 @@
-// import CatalogLayout from "@/components/CatalogLayout";
-import CatalogLayout from "@/app/components/CatalogLayout";
-
-export const metadata = {
-  title: 'Shop All | Our Store',
-};
+import CatalogLayout from "../../components/catalog/CatalogLayout";
+import { clothingFilters } from "@/lib/mock/filters";
+import { mockCatalogProducts } from "@/lib/mock/dummyData";
 
 export default function ShopPage() {
-  // Render the base catalog with no category filter applied
-  return <CatalogLayout />;
+  return (
+    <CatalogLayout
+      title="All Products"
+      breadcrumb="Home > Shop"
+      productCount={mockCatalogProducts.length}
+      filters={clothingFilters}
+      products={mockCatalogProducts}
+    />
+  );
 }

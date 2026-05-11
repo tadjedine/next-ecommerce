@@ -1,18 +1,29 @@
-import Slider from "../components/Slider"
-import HeroSlider from "../components/HeroSlider"
-import CategoryStrip from "../components/CategoryStrip"
-import FeaturedProducts from "../components/FeaturedProducts"
-import NewArrivals from "../components/NewArrivals"
+import HeroSlider from "../components/HeroSlider";
+import Marquee from "../components/Marquee";
+import BrowseCategories from "../components/BrowseCategories";
+import OurProducts from "../components/OurProducts";
+import PromoBanner from "../components/PromoBanner";
+import FeatureCards from "../components/FeatureCards";
+import Testimonials from "../components/Testimonials";
+import Newsletter from "../components/Newsletter";
+import TrustBar from "../components/TrustBar";
+import CtaBanner from "../components/CtaBanner";
+import { PageTransition } from "../components/motion/PageTransition";
 
 const HomePage = () => {
   return (
-    <div className=''>
-      {/* <Slider/> */}
+    <PageTransition className="min-h-screen bg-bg-base">
       <HeroSlider />
-      <CategoryStrip />
-      <FeaturedProducts />
-      <NewArrivals/>
-    </div>
+      <Marquee />
+      <BrowseCategories />
+      <OurProducts />
+      <PromoBanner />
+      <FeatureCards />
+      <Testimonials />
+      <Newsletter />
+      <TrustBar />
+      <CtaBanner />
+    </PageTransition>
   )
 }
 
