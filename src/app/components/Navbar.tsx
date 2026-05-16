@@ -1,44 +1,149 @@
-import Link from "next/link"
-import Menu from "./Menu"
-import Image from "next/image"
-import SearchBar from "./SearchBar"
-import NavIcons from "./NavIcons"
+"use client";
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { ChevronDown, Globe, Moon, ShoppingCart, LayoutGrid, Music, Gift, ArrowRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import CartDrawer from "./cart/CartDrawer";
 
-function Navbar() {
-    return (
-        <div className="h-20 px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative">
-            <div className=" h-full flex items-center justify-between md:hidden">
-                {/* Mobile */}
-                <Link href= "/" className="text-2xl tracking-wide"> Homepage </Link>
-                <Menu/>
+const MegaMenu = ({ isOpen, onMouseEnter, onMouseLeave }: { isOpen: boolean; onMouseEnter: () => void; onMouseLeave: () => void }) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0, scaleY: 0.95 }}
+          animate={{ opacity: 1, scaleY: 1 }}
+          exit={{ opacity: 0, scaleY: 0.95 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          style={{ originY: 0 }}
+          className="absolute top-full left-0 w-full bg-surface border-b border-border-soft shadow-sm"
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+        >
+          <div className="max-w-7xl mx-auto px-6 py-8 flex gap-12">
+            <div className="w-1/3 bg-bg-base rounded-2xl p-8 flex flex-col items-start justify-center">
+              <h3 className="text-xl font-bold text-text-primary mb-2">Nouveautés 2026</h3>
+              <p className="text-text-muted mb-6 text-sm">Découvrez nos dernières collections avec des designs exclusifs.</p>
+              <Link href="/shop" className="text-primary font-semibold flex items-center gap-2 hover:gap-3 transition-all">
+                Explorer <ArrowRight size={16} />
+              </Link>
             </div>
-            {/* BIGGER SCREENS */}
-            <div className="hidden md:flex items-center justify-between gap-8 h-full">
-
-                {/* LEFT */}
-                <div className="flex justify-between items-center gap-12">
-
-                    <Link href="/" className="flex items-center gap-3"> 
-                        <Image src="/logo.png" alt="" height={24} width={24}/> 
-                        <div className="text-2xl tracking-wide">Store</div>
-                    </Link>
-                    <div className=" hidden xl:flex gap-4 ">
-                        <Link href="/">Homepage</Link>
-                        <Link href="/">Shop</Link>
-                        <Link href="/">Deals</Link>
-                        <Link href="/">about</Link>
-                        <Link href="/">Contact</Link>
+            <div className="w-2/3 grid grid-cols-3 gap-8">
+              <div>
+                <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-6">Électronique</h4>
+                <div className="space-y-6">
+                  <Link href="/shop/electronics" className="group flex items-start gap-4">
+                    <div className="p-2 bg-bg-base rounded-lg group-hover:bg-primary group-hover:text-white transition-colors text-text-muted">
+                      <LayoutGrid size={20} />
                     </div>
+                    <div>
+                      <div className="font-semibold text-text-primary group-hover:text-primary transition-colors">Ordinateurs</div>
+                      <div className="text-xs text-text-muted">Laptops et PC de bureau</div>
+                    </div>
+                  </Link>
+                  <Link href="/shop/electronics" className="group flex items-start gap-4">
+                    <div className="p-2 bg-bg-base rounded-lg group-hover:bg-primary group-hover:text-white transition-colors text-text-muted">
+                      <Music size={20} />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-text-primary group-hover:text-primary transition-colors">Audio</div>
+                      <div className="text-xs text-text-muted">Casques et enceintes</div>
+                    </div>
+                  </Link>
                 </div>
-
-                {/* RIGHT */}
-                <div className="flex-1 flex items-center justify-between gap-8 ">
-                    <SearchBar/>
-                    <NavIcons/>
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-6">Accessoires</h4>
+                <div className="space-y-6">
+                  <Link href="/shop/accessories" className="group flex items-start gap-4">
+                    <div className="p-2 bg-bg-base rounded-lg group-hover:bg-primary group-hover:text-white transition-colors text-text-muted">
+                      <Gift size={20} />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-text-primary group-hover:text-primary transition-colors">Cadeaux</div>
+                      <div className="text-xs text-text-muted">Idées originales</div>
+                    </div>
+                  </Link>
                 </div>
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-6">Promotions</h4>
+                <div className="space-y-6">
+                  <Link href="/shop/sale" className="group flex items-start gap-4">
+                    <div className="p-2 bg-orange-50 rounded-lg group-hover:bg-accent group-hover:text-white transition-colors text-orange-500">
+                      <Gift size={20} />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-text-primary group-hover:text-accent transition-colors">Ventes Flash</div>
+                      <div className="text-xs text-text-muted">Jusqu'à -50%</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
             </div>
-        </div>
-    )
-}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
 
-export default Navbar
+export default function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const [megaMenuOpen, setMegaMenuOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <>
+      <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-surface/80 backdrop-blur-md border-b border-border-soft" : "bg-surface border-b border-border-soft"}`}>
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xl">S</div>
+            <span className="font-bold text-xl text-text-primary">Store</span>
+          </Link>
+          
+          <div className="hidden md:flex items-center gap-8 h-full">
+            <div 
+              className="flex items-center gap-1 text-text-muted hover:text-text-primary font-medium cursor-pointer h-full border-b-2 border-transparent hover:border-primary transition-colors"
+              onMouseEnter={() => setMegaMenuOpen(true)}
+              onMouseLeave={() => setMegaMenuOpen(false)}
+            >
+              Boutique <ChevronDown size={16} />
+            </div>
+            <Link href="/shop/sale" className="text-text-muted hover:text-text-primary font-medium transition-colors">Promotions</Link>
+            <Link href="/" className="text-text-muted hover:text-text-primary font-medium transition-colors">À propos</Link>
+          </div>
+
+          <div className="flex items-center gap-4 text-text-muted">
+            <div className="hidden lg:flex items-center gap-4">
+              <span className="text-sm font-medium">EUR</span>
+              <Globe size={20} className="cursor-pointer hover:text-text-primary transition-colors" />
+              <Moon size={20} className="cursor-pointer hover:text-text-primary transition-colors" />
+              <div className="w-px h-6 bg-border-soft"></div>
+            </div>
+            <div 
+              className="relative cursor-pointer hover:text-text-primary transition-colors"
+              onClick={() => setCartOpen(true)}
+            >
+              <ShoppingCart size={24} />
+              <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+            </div>
+            <Link href="/auth" className="hidden sm:flex ml-4 bg-primary text-white px-6 py-2.5 rounded-full font-medium hover:bg-primary-dark transition-colors">
+              Connexion
+            </Link>
+          </div>
+        </div>
+        <MegaMenu isOpen={megaMenuOpen} onMouseEnter={() => setMegaMenuOpen(true)} onMouseLeave={() => setMegaMenuOpen(false)} />
+      </div>
+
+      <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
+    </>
+  );
+}
