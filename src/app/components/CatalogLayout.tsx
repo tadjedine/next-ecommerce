@@ -1,19 +1,29 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FilterSidebar from "./FilterSideBar";
 import ProductCard from "./ProductCard";
-import { mockCatalogProducts } from "@/lib/mock/dummyData";
+import { ApiProduct } from "@/lib/api";
 
 export default function CatalogLayout({ initialCategory }: { initialCategory?: string }) {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [sortBy, setSortBy] = useState("featured");
-  
-  // Dummy filtering logic
-  const filteredProducts = initialCategory 
-    ? mockCatalogProducts.filter(p => p.category.toLowerCase() === initialCategory.toLowerCase())
-    : mockCatalogProducts;
+  const [products, setProducts] = useState<ApiProduct[]>([]);
 
-  const categories = Array.from(new Set(mockCatalogProducts.map(p => p.category)));
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/products?per_page=24`);
+        const json = await res.json();
+        setProducts(json.data as ApiProduct[]);
+      } catch (err) {
+        console.error("Failed to fetch products:", err);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  const filteredProducts = products;
+  const categories: string[] = [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

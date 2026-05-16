@@ -4,7 +4,15 @@ import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { mockCatalogProducts } from "@/lib/mock/dummyData";
+
+interface CartItem {
+  cartId: string;
+  name: string;
+  price: number;
+  image: string | null;
+  quantity: number;
+  selectedVariant: { size: string; color: string };
+}
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -12,14 +20,8 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const [cartItems, setCartItems] = useState(
-    mockCatalogProducts.slice(0, 3).map((p, i) => ({
-      ...p,
-      cartId: `cart-${i}`,
-      quantity: 1,
-      selectedVariant: { size: p.variants?.sizes[0] || "M", color: p.variants?.colors[0].name || "Default" }
-    }))
-  );
+  // Start with an empty cart — real cart integration will come later
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   const updateQty = (id: string, delta: number) => {
     setCartItems(prev => prev.map(item => {
@@ -78,7 +80,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     <ShoppingBag size={32} />
                   </div>
                   <h3 className="text-xl font-bold text-text-primary">Your cart is empty</h3>
-                  <p className="text-text-muted">Looks like you haven't added anything yet.</p>
+                  <p className="text-text-muted">Looks like you haven&apos;t added anything yet.</p>
                   <button 
                     onClick={onClose}
                     className="mt-4 px-8 py-3 bg-primary text-white rounded-full font-bold hover:bg-primary-dark transition-colors"
@@ -96,8 +98,14 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       exit={{ opacity: 0, x: 100 }}
                       className="flex gap-4"
                     >
-                      <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-border-soft">
-                        <Image src={item.image} alt={item.name} fill className="object-cover" />
+                      <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-border-soft bg-bg-base">
+                        {item.image ? (
+                          <Image src={item.image} alt={item.name} fill className="object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-text-muted">
+                            <ShoppingBag size={20} />
+                          </div>
+                        )}
                       </div>
                       
                       <div className="flex flex-col flex-1">
@@ -116,7 +124,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                         </div>
                         
                         <div className="flex items-center justify-between mt-auto">
-                          <div className="font-bold text-primary">${item.price.toFixed(2)}</div>
+                          <div className="font-bold text-primary">{item.price.toFixed(2)} €</div>
                           
                           <div className="flex items-center gap-3">
                             <button 
@@ -145,7 +153,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               <div className="p-6 border-t border-border-soft bg-surface">
                 <div className="flex items-center justify-between mb-6">
                   <span className="font-semibold text-text-muted">Subtotal</span>
-                  <span className="text-xl font-extrabold text-text-primary">${subtotal.toFixed(2)}</span>
+                  <span className="text-xl font-extrabold text-text-primary">{subtotal.toFixed(2)} €</span>
                 </div>
                 
                 <div className="flex flex-col gap-3">

@@ -2,14 +2,30 @@
 import { FadeUpOnScroll } from "./motion/FadeUpOnScroll";
 import { StaggerContainer, StaggerItem } from "./motion/Stagger";
 import { HoverLift } from "./motion/HoverLift";
-import { Zap, Shield, Smartphone, Globe2 } from "lucide-react";
+import { Truck, ShieldCheck, RotateCcw, Headphones } from "lucide-react";
 
 export default function FeatureCards() {
   const features = [
-    { icon: <Zap size={24} />, title: "Vitesse Éclair", desc: "Performance optimisée pour un chargement instantané de toutes nos pages." },
-    { icon: <Shield size={24} />, title: "Sécurité Maximale", desc: "Vos données sont chiffrées et protégées par les meilleurs standards." },
-    { icon: <Smartphone size={24} />, title: "100% Responsive", desc: "Une expérience parfaite sur mobile, tablette et ordinateur de bureau." },
-    { icon: <Globe2 size={24} />, title: "Livraison Globale", desc: "Nous expédions nos produits dans plus de 150 pays à travers le monde." },
+    {
+      icon: <Truck size={24} />,
+      title: "Livraison Rapide",
+      desc: "Livraison gratuite à partir de 49€ d'achat. Expédition sous 24h pour toutes vos commandes."
+    },
+    {
+      icon: <ShieldCheck size={24} />,
+      title: "Paiement Sécurisé",
+      desc: "Transactions protégées par un chiffrement SSL. Visa, Mastercard, PayPal et paiement en 3x acceptés."
+    },
+    {
+      icon: <RotateCcw size={24} />,
+      title: "Retours Gratuits",
+      desc: "Vous disposez de 30 jours pour changer d'avis. Retour et remboursement simples et sans frais."
+    },
+    {
+      icon: <Headphones size={24} />,
+      title: "Service Client 7j/7",
+      desc: "Notre équipe vous accompagne par chat, email ou téléphone pour répondre à toutes vos questions."
+    },
   ];
 
   return (
@@ -18,7 +34,7 @@ export default function FeatureCards() {
         <FadeUpOnScroll className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-navy mb-4">Pourquoi nous choisir ?</h2>
           <p className="text-slate-gray max-w-2xl mx-auto">
-            Nous avons repensé chaque détail pour vous offrir la meilleure expérience possible. Découvrez ce qui nous rend uniques.
+            Des avantages concrets pour une expérience d&apos;achat sans compromis. Votre satisfaction est notre priorité.
           </p>
         </FadeUpOnScroll>
 

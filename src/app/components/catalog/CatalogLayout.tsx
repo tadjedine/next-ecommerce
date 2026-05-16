@@ -6,14 +6,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SlidersHorizontal, X } from "lucide-react";
 import { StaggerContainer, StaggerItem } from "../motion/Stagger";
 import ProductCard from "../ProductCard";
-import { Product } from "@/lib/mock/dummyData";
+import { ApiProduct } from "@/lib/api";
 
 interface CatalogLayoutProps {
   title: string;
   breadcrumb: string;
   productCount: number;
   filters: FilterGroup[];
-  products: Product[];
+  products: ApiProduct[];
 }
 
 export default function CatalogLayout({ title, breadcrumb, productCount, filters, products }: CatalogLayoutProps) {
