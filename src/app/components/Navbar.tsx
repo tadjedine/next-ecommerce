@@ -135,7 +135,7 @@ export default function Navbar() {
               <ShoppingCart size={24} />
               <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
             </div>
-            <Link href="/login" className="hidden sm:flex ml-4 bg-primary text-white px-6 py-2.5 rounded-full font-medium hover:bg-primary-dark transition-colors">
+            <Link href="/auth" className="hidden sm:flex ml-4 bg-primary text-white px-6 py-2.5 rounded-full font-medium hover:bg-primary-dark transition-colors">
               Connexion
             </Link>
           </div>

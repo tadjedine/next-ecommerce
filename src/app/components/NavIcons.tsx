@@ -20,7 +20,7 @@ function NavIcons() {
 
     function handleProfile(){
         if (!LoggedIn) {
-            router.push('/login')
+            router.push('/auth')
             return
         }
         setIsProfileOpen((prev)=> !prev);
