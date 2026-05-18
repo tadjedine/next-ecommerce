@@ -1,18 +1,9 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
-import Image from "next/image";
+import { X, Minus, Plus, Trash2, ShoppingBag, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-
-interface CartItem {
-  cartId: string;
-  name: string;
-  price: number;
-  image: string | null;
-  quantity: number;
-  selectedVariant: { size: string; color: string };
-}
+import { useCart } from "@/lib/CartContext";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -20,24 +11,32 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  // Start with an empty cart — real cart integration will come later
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { items, totalQuantity, subtotal, updateItem, removeItem, loading } = useCart();
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
 
-  const updateQty = (id: string, delta: number) => {
-    setCartItems(prev => prev.map(item => {
-      if (item.cartId === id) {
-        const newQty = Math.max(1, item.quantity + delta);
-        return { ...item, quantity: newQty };
-      }
-      return item;
-    }));
+  const handleUpdateQty = async (productId: number, currentQty: number, delta: number) => {
+    const newQty = currentQty + delta;
+    if (newQty < 1) return;
+    setUpdatingId(productId);
+    try {
+      await updateItem(productId, newQty);
+    } catch (err) {
+      console.error("Failed to update quantity:", err);
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
-  const removeItem = (id: string) => {
-    setCartItems(prev => prev.filter(item => item.cartId !== id));
+  const handleRemove = async (productId: number) => {
+    setUpdatingId(productId);
+    try {
+      await removeItem(productId);
+    } catch (err) {
+      console.error("Failed to remove item:", err);
+    } finally {
+      setUpdatingId(null);
+    }
   };
-
-  const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
   return (
     <AnimatePresence>
@@ -62,7 +61,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-extrabold text-text-primary">Your Cart</h2>
                 <span className="bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-sm font-bold">
-                  {cartItems.length}
+                  {totalQuantity}
                 </span>
               </div>
               <button 
@@ -74,7 +73,11 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {cartItems.length === 0 ? (
+              {loading ? (
+                <div className="h-full flex items-center justify-center">
+                  <Loader2 size={32} className="animate-spin text-primary" />
+                </div>
+              ) : items.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
                   <div className="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-2">
                     <ShoppingBag size={32} />
@@ -90,53 +93,54 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 </div>
               ) : (
                 <AnimatePresence>
-                  {cartItems.map((item) => (
+                  {items.map((item) => (
                     <motion.div 
-                      key={item.cartId}
+                      key={item.product_id}
                       layout
                       initial={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 100 }}
-                      className="flex gap-4"
+                      className={`flex gap-4 ${updatingId === item.product_id ? "opacity-60" : ""}`}
                     >
                       <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-border-soft bg-bg-base">
-                        {item.image ? (
-                          <Image src={item.image} alt={item.name} fill className="object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-text-muted">
-                            <ShoppingBag size={20} />
-                          </div>
-                        )}
+                        <div className="w-full h-full flex items-center justify-center text-text-muted">
+                          <ShoppingBag size={20} />
+                        </div>
                       </div>
                       
                       <div className="flex flex-col flex-1">
                         <div className="flex justify-between items-start mb-1">
-                          <h4 className="font-semibold text-text-primary line-clamp-1">{item.name}</h4>
+                          <h4 className="font-semibold text-text-primary line-clamp-1">{item.name || `Product #${item.product_id}`}</h4>
                           <button 
-                            onClick={() => removeItem(item.cartId)}
+                            onClick={() => handleRemove(item.product_id)}
                             className="text-text-muted hover:text-red-500 transition-colors p-1"
+                            disabled={updatingId === item.product_id}
                           >
                             <Trash2 size={16} />
                           </button>
                         </div>
                         
-                        <div className="text-xs text-text-muted mb-2">
-                          {item.selectedVariant.color} / {item.selectedVariant.size}
-                        </div>
+                        {item.reference && (
+                          <div className="text-xs text-text-muted mb-2">
+                            Ref: {item.reference}
+                          </div>
+                        )}
                         
                         <div className="flex items-center justify-between mt-auto">
-                          <div className="font-bold text-primary">{item.price.toFixed(2)} €</div>
+                          <div className="font-bold text-primary">{item.line_subtotal.toFixed(2)} €</div>
                           
                           <div className="flex items-center gap-3">
                             <button 
-                              onClick={() => updateQty(item.cartId, -1)}
-                              className="w-7 h-7 rounded-full border border-border-soft flex items-center justify-center text-text-primary hover:bg-bg-base transition-colors"
+                              onClick={() => handleUpdateQty(item.product_id, item.quantity, -1)}
+                              disabled={item.quantity <= 1 || updatingId === item.product_id}
+                              className="w-7 h-7 rounded-full border border-border-soft flex items-center justify-center text-text-primary hover:bg-bg-base transition-colors disabled:opacity-40"
                             >
                               <Minus size={14} />
                             </button>
                             <span className="text-sm font-semibold w-4 text-center">{item.quantity}</span>
                             <button 
-                              onClick={() => updateQty(item.cartId, 1)}
-                              className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white hover:bg-primary-dark transition-colors shadow-sm"
+                              onClick={() => handleUpdateQty(item.product_id, item.quantity, 1)}
+                              disabled={updatingId === item.product_id}
+                              className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white hover:bg-primary-dark transition-colors shadow-sm disabled:opacity-40"
                             >
                               <Plus size={14} />
                             </button>
@@ -149,7 +153,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               )}
             </div>
 
-            {cartItems.length > 0 && (
+            {items.length > 0 && (
               <div className="p-6 border-t border-border-soft bg-surface">
                 <div className="flex items-center justify-between mb-6">
                   <span className="font-semibold text-text-muted">Subtotal</span>
@@ -175,3 +179,4 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     </AnimatePresence>
   );
 }
+

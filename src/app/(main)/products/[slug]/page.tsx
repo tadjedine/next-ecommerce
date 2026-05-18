@@ -2,12 +2,13 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Minus, Plus, Heart, ShoppingBag, ShieldCheck, Truck, RefreshCw, ImageOff, Loader2 } from "lucide-react";
+import { Star, Minus, Plus, Heart, ShoppingBag, ShieldCheck, Truck, RefreshCw, ImageOff, Loader2, Check } from "lucide-react";
 import { mockReviews } from "@/lib/mock/dummyData";
 import { FadeUpOnScroll } from "../../../components/motion/FadeUpOnScroll";
 import ProductCard from "../../../components/ProductCard";
 import { ApiProduct, ApiProductImage } from "@/lib/api";
 import { useParams } from "next/navigation";
+import { useCart } from "@/lib/CartContext";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -20,6 +21,9 @@ export default function ProductDetailPage() {
   const [activeImage, setActiveImage] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("Description");
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
+  const { addItem } = useCart();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -198,10 +202,34 @@ export default function ProductDetailPage() {
               
               <motion.button 
                 whileTap={{ scale: 0.97 }}
-                disabled={product.quantity <= 0}
-                className="flex-1 h-14 bg-primary text-white rounded-full font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={product.quantity <= 0 || addingToCart}
+                onClick={async () => {
+                  if (addingToCart) return;
+                  setAddingToCart(true);
+                  try {
+                    await addItem(product.id, quantity);
+                    setAddedToCart(true);
+                    setQuantity(1);
+                    setTimeout(() => setAddedToCart(false), 2000);
+                  } catch (err) {
+                    console.error("Failed to add to cart:", err);
+                  } finally {
+                    setAddingToCart(false);
+                  }
+                }}
+                className={`flex-1 h-14 rounded-full font-bold flex items-center justify-center gap-2 shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  addedToCart
+                    ? "bg-emerald-500 text-white shadow-emerald-500/20"
+                    : "bg-primary text-white shadow-primary/20 hover:bg-primary-dark"
+                }`}
               >
-                <ShoppingBag size={20} /> Add to Cart
+                {addingToCart ? (
+                  <><Loader2 size={20} className="animate-spin" /> Adding...</>
+                ) : addedToCart ? (
+                  <><Check size={20} /> Added to Cart!</>
+                ) : (
+                  <><ShoppingBag size={20} /> Add to Cart</>
+                )}
               </motion.button>
               
               <button className="w-14 h-14 rounded-full border border-border-soft flex items-center justify-center text-text-muted hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-all shrink-0">

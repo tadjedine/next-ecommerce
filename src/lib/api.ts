@@ -70,6 +70,32 @@ export interface ApiPaginatedResponse<T> {
   };
 }
 
+export interface ApiCartItem {
+  product_id: number;
+  product_attribute_id: number;
+  quantity: number;
+  unit_price: number;
+  line_subtotal: number;
+  name: string | null;
+  reference: string | null;
+  image: number | null;
+}
+
+export interface ApiCart {
+  id: number;
+  customer_id: number;
+  currency_id: number;
+  language_id: number;
+  shop_id: number;
+  items: ApiCartItem[];
+  total_quantity: number;
+  subtotal: number;
+  discount_summary: unknown | null;
+  total_after_discount: number;
+  is_ordered: boolean;
+  updated_at: string | null;
+}
+
 // ─── API Client ──────────────────────────────────────────────
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
@@ -116,9 +142,10 @@ export async function getCategoryHierarchy(parentId?: number) {
 
 // ─── Products ────────────────────────────────────────────────
 
-export async function getProducts(params?: { category?: number; search?: string; per_page?: number }) {
+export async function getProducts(params?: { category?: number; category_slug?: string; search?: string; per_page?: number }) {
   const query = new URLSearchParams();
   if (params?.category) query.set("category", String(params.category));
+  if (params?.category_slug) query.set("category_slug", params.category_slug);
   if (params?.search) query.set("search", params.search);
   if (params?.per_page) query.set("per_page", String(params.per_page));
 
@@ -133,3 +160,50 @@ export async function getProduct(id: number) {
 export async function getProductImages(productId: number) {
   return apiFetch<{ data: ApiProductImage[] }>(`/v1/products/${productId}/images`);
 }
+
+// ─── Cart ────────────────────────────────────────────────────
+
+export async function getOrCreateCart(customerId: number): Promise<ApiCart> {
+  const res = await fetch(`${API_BASE}/v1/cart`, {
+    method: "POST",
+    headers: { "Accept": "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ id_customer: customerId }),
+  });
+  if (!res.ok) throw new Error(`Cart fetch failed: ${res.status}`);
+  const json = await res.json();
+  return json.data;
+}
+
+export async function addCartItem(customerId: number, productId: number, quantity: number = 1): Promise<ApiCart> {
+  const res = await fetch(`${API_BASE}/v1/cart/items`, {
+    method: "POST",
+    headers: { "Accept": "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ id_customer: customerId, id_product: productId, quantity }),
+  });
+  if (!res.ok) throw new Error(`Add to cart failed: ${res.status}`);
+  const json = await res.json();
+  return json.data;
+}
+
+export async function updateCartItem(customerId: number, productId: number, quantity: number): Promise<ApiCart> {
+  const res = await fetch(`${API_BASE}/v1/cart/items/${productId}`, {
+    method: "PUT",
+    headers: { "Accept": "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ id_customer: customerId, quantity }),
+  });
+  if (!res.ok) throw new Error(`Update cart failed: ${res.status}`);
+  const json = await res.json();
+  return json.data;
+}
+
+export async function removeCartItem(customerId: number, productId: number): Promise<ApiCart> {
+  const res = await fetch(`${API_BASE}/v1/cart/items/${productId}`, {
+    method: "DELETE",
+    headers: { "Accept": "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ id_customer: customerId, quantity: 0 }),
+  });
+  if (!res.ok) throw new Error(`Remove from cart failed: ${res.status}`);
+  const json = await res.json();
+  return json.data;
+}
+

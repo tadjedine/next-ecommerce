@@ -2,39 +2,52 @@
 import { useEffect, useState } from "react";
 import CatalogLayout from "../../../components/catalog/CatalogLayout";
 import { clothingFilters, electronicsFilters } from "@/lib/mock/filters";
-import { ApiProduct } from "@/lib/api";
+import { ApiProduct, ApiCategory } from "@/lib/api";
 import { useParams } from "next/navigation";
 
 export default function CategoryPage() {
   const params = useParams();
-  const category = params.category as string;
-  const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+  const categorySlug = params.category as string;
 
   const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [categoryName, setCategoryName] = useState(
+    categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
-        // Try to find the category ID by slug — for now, fetch all and filter
-        // In the future, the API could support filtering by slug directly
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/v1/products?per_page=24`
+        // Fetch products filtered by category slug
+        const productsRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/v1/products?category_slug=${encodeURIComponent(categorySlug)}&per_page=24`
         );
-        const json = await res.json();
-        setProducts(json.data as ApiProduct[]);
+        const productsJson = await productsRes.json();
+        setProducts(productsJson.data as ApiProduct[]);
+
+        // Fetch categories to resolve the display name
+        const catsRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/v1/categories?per_page=50`
+        );
+        const catsJson = await catsRes.json();
+        const matchedCat = (catsJson.data as ApiCategory[]).find(
+          (c) => c.slug === categorySlug
+        );
+        if (matchedCat) {
+          setCategoryName(matchedCat.name);
+        }
       } catch (err) {
-        console.error("Failed to fetch products:", err);
+        console.error("Failed to fetch category products:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
-  }, [category]);
+    fetchData();
+  }, [categorySlug]);
 
   // Choose filters based on category
-  const filters = category === "electronics" ? electronicsFilters : clothingFilters;
+  const filters = categorySlug === "electronics" ? electronicsFilters : clothingFilters;
 
   if (loading) {
     return (
@@ -54,3 +67,4 @@ export default function CategoryPage() {
     />
   );
 }
+

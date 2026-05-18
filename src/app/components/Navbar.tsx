@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { ChevronDown, Globe, Moon, ShoppingCart, LayoutGrid, Music, Gift, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CartDrawer from "./cart/CartDrawer";
+import { useCart } from "@/lib/CartContext";
 
 const MegaMenu = ({ isOpen, onMouseEnter, onMouseLeave }: { isOpen: boolean; onMouseEnter: () => void; onMouseLeave: () => void }) => {
   return (
@@ -91,6 +92,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const { totalQuantity } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -133,7 +135,9 @@ export default function Navbar() {
               onClick={() => setCartOpen(true)}
             >
               <ShoppingCart size={24} />
-              <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+              {totalQuantity > 0 && (
+                <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{totalQuantity}</span>
+              )}
             </div>
             <Link href="/auth" className="hidden sm:flex ml-4 bg-primary text-white px-6 py-2.5 rounded-full font-medium hover:bg-primary-dark transition-colors">
               Connexion

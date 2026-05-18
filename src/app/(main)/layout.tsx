@@ -3,6 +3,7 @@ import '@mantine/core/styles.css';
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer/Footer";
+import { CartProvider } from "@/lib/CartContext";
 
 export default function MainLayout({
     children,
@@ -10,13 +11,13 @@ export default function MainLayout({
     children: React.ReactNode
 }){
     return(
-        <>
+        <CartProvider>
             <Navbar/>
             {children}
             <MantineProvider>
                 <Footer/>
             </MantineProvider>
-        </>
+        </CartProvider>
     )
     
 }

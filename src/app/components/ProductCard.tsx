@@ -1,11 +1,17 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { ApiProduct } from "@/lib/api";
 import { HoverLift } from "./motion/HoverLift";
-import { Heart, ImageOff } from "lucide-react";
+import { Heart, ImageOff, Check, Loader2 } from "lucide-react";
+import { useCart } from "@/lib/CartContext";
 
 export default function ProductCard({ product }: { product: ApiProduct }) {
+  const { addItem } = useCart();
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+
   // Get the cover image URL, falling back through available sources
   const imageUrl =
     product.cover_image?.urls?.home ||
@@ -13,6 +19,20 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
     (product.images && product.images.length > 0 ? product.images[0]?.urls?.home || product.images[0]?.url : null);
 
   const hasImage = !!imageUrl;
+
+  const handleAddToCart = async () => {
+    if (adding || product.quantity <= 0) return;
+    setAdding(true);
+    try {
+      await addItem(product.id, 1);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 1500);
+    } catch (err) {
+      console.error("Failed to add to cart:", err);
+    } finally {
+      setAdding(false);
+    }
+  };
 
   return (
     <HoverLift className="group flex flex-col gap-3 relative bg-surface border border-border-soft rounded-2xl p-3 h-full">
@@ -69,10 +89,23 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
 
       {/* Add to Cart CTA */}
       <button
-        className="w-full mt-2 py-2.5 bg-bg-base text-primary text-sm font-semibold rounded-xl transition-colors hover:bg-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled={product.quantity <= 0}
+        onClick={handleAddToCart}
+        className={`w-full mt-2 py-2.5 text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+          added
+            ? "bg-emerald-500 text-white"
+            : "bg-bg-base text-primary hover:bg-primary hover:text-white"
+        }`}
+        disabled={product.quantity <= 0 || adding}
       >
-        {product.quantity > 0 ? "Add to Cart" : "Unavailable"}
+        {adding ? (
+          <><Loader2 size={16} className="animate-spin" /> Adding...</>
+        ) : added ? (
+          <><Check size={16} /> Added!</>
+        ) : product.quantity > 0 ? (
+          "Add to Cart"
+        ) : (
+          "Unavailable"
+        )}
       </button>
     </HoverLift>
   );
