@@ -94,18 +94,18 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="bg-surface min-h-screen pt-24 pb-24">
-      <div className="max-w-7xl mx-auto px-6">
+    <div className="bg-surface min-h-screen pt-28 pb-24">
+      <div className="max-w-7xl mx-auto px-8">
         
         {/* Top Section: Gallery & Info */}
-        <div className="flex flex-col lg:flex-row gap-12 mb-20">
+        <div className="flex flex-col lg:flex-row gap-16 mb-20">
           
           {/* Left: Gallery */}
           <div className="w-full lg:w-1/2 flex flex-col gap-4">
             <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-bg-base border border-border-soft">
               {product.on_sale && (
                 <div className="absolute top-4 left-4 z-10 bg-accent text-white px-3 py-1 text-sm font-bold rounded-full uppercase tracking-wider shadow-md">
-                  Promo
+                  Sale
                 </div>
               )}
               <AnimatePresence mode="wait">
@@ -147,12 +147,12 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Right: Info */}
-          <div className="w-full lg:w-1/2 flex flex-col">
+          <div className="w-full lg:w-1/2 flex flex-col max-w-[520px]">
             <div className="text-sm font-medium text-text-muted mb-4">
               Home / Shop / {product.name}
             </div>
             
-            <h1 className="text-3xl md:text-4xl font-extrabold text-text-primary mb-4 leading-tight">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-text-primary mb-4 leading-tight">
               {product.name}
             </h1>
             
@@ -239,9 +239,9 @@ export default function ProductDetailPage() {
             
             {/* Trust Badges */}
             <div className="flex flex-wrap items-center gap-6 py-6 border-t border-border-soft text-xs font-semibold text-text-muted">
-              <div className="flex items-center gap-2"><ShieldCheck size={18} className="text-primary"/> Paiement Sécurisé</div>
-              <div className="flex items-center gap-2"><Truck size={18} className="text-primary"/> Livraison Gratuite</div>
-              <div className="flex items-center gap-2"><RefreshCw size={18} className="text-primary"/> Retours 30 Jours</div>
+              <div className="flex items-center gap-2"><ShieldCheck size={18} className="text-primary"/> Secure Payment</div>
+              <div className="flex items-center gap-2"><Truck size={18} className="text-primary"/> Free Shipping</div>
+              <div className="flex items-center gap-2"><RefreshCw size={18} className="text-primary"/> 30-Day Returns</div>
             </div>
           </div>
         </div>
@@ -281,9 +281,9 @@ export default function ProductDetailPage() {
             
             {activeTab === "Shipping & Returns" && (
               <div className="text-text-muted text-lg leading-relaxed max-w-3xl">
-                <p className="mb-4"><strong className="text-text-primary">Livraison Standard Gratuite :</strong> 3-5 jours ouvrés.</p>
-                <p className="mb-4"><strong className="text-text-primary">Livraison Express :</strong> 1-2 jours ouvrés (15,00 €).</p>
-                <p><strong className="text-text-primary">Retours :</strong> Nous acceptons les retours sous 30 jours. Les articles doivent être en état neuf avec les étiquettes attachées.</p>
+                <p className="mb-4"><strong className="text-text-primary">Free Standard Shipping:</strong> 3–5 business days.</p>
+                <p className="mb-4"><strong className="text-text-primary">Express Shipping:</strong> 1–2 business days ($15.00).</p>
+                <p><strong className="text-text-primary">Returns:</strong> We accept returns within 30 days. Items must be in new condition with tags attached.</p>
               </div>
             )}
             

@@ -14,12 +14,12 @@ export default function BrowseCategories() {
     const fetchCategories = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/v1/categories?per_page=50`
+          `${process.env.NEXT_PUBLIC_API_URL}/v1/categories/main`
         );
         const json = await res.json();
         // Filter out root categories and unnamed
         const filtered = (json.data as ApiCategory[]).filter(
-          (c) => !c.is_root && c.name && c.name !== "Unnamed Category"
+          (c) => c.name && c.name !== "Unnamed Category"
         );
         setCategories(filtered);
       } catch (err) {
@@ -37,12 +37,12 @@ export default function BrowseCategories() {
     return (
       <div className="py-24 bg-surface overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 mb-12">
-          <FadeUpOnScroll>
+          <FadeUpOnScroll className="text-center">
             <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary mb-2">Shop by Category</h2>
             <p className="text-text-muted text-lg">Find exactly what you&apos;re looking for.</p>
           </FadeUpOnScroll>
         </div>
-        <div className="w-full flex overflow-x-auto scrollbar-hide pb-8 px-6 md:px-12 gap-6 snap-x snap-mandatory">
+        <div className="w-full flex overflow-x-auto md:overflow-visible scrollbar-hide pb-8 px-6 md:px-12 gap-6 snap-x snap-mandatory md:snap-none md:flex-wrap md:justify-center">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="shrink-0 snap-start w-40 h-48 rounded-2xl bg-bg-base animate-pulse" />
           ))}
@@ -68,13 +68,13 @@ export default function BrowseCategories() {
   return (
     <div className="py-24 bg-surface overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 mb-12">
-        <FadeUpOnScroll>
+        <FadeUpOnScroll className="text-center">
           <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary mb-2">Shop by Category</h2>
           <p className="text-text-muted text-lg">Find exactly what you&apos;re looking for.</p>
         </FadeUpOnScroll>
       </div>
 
-      <div className="w-full flex overflow-x-auto scrollbar-hide pb-8 px-6 md:px-12 gap-6 snap-x snap-mandatory">
+      <div className="w-full flex overflow-x-auto md:overflow-visible scrollbar-hide pb-8 px-6 md:px-12 gap-6 snap-x snap-mandatory md:snap-none md:flex-wrap md:justify-center">
         {categories.map((cat, i) => (
           <Link key={cat.id} href={`/shop/${cat.slug}`} className="shrink-0 snap-start">
             <motion.div

@@ -28,8 +28,8 @@ export default function PromoBanner() {
             {/* Right 40% */}
             <div className="w-full md:w-[40%] h-80 md:h-auto relative">
               <Image 
-                src="https://picsum.photos/seed/promo/800/1000"
-                alt="Promo Lifestyle"
+                src="/promo-cloth.png"
+                alt="Premium fashion collection"
                 fill
                 className="object-cover"
               />

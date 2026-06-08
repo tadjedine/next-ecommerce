@@ -11,17 +11,17 @@ const config: Config = {
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-        "bg-hero": "linear-gradient(135deg, #EEF3FF 0%, #F5F0FF 100%)",
+        "bg-hero": "linear-gradient(135deg, #F0EDE8 0%, #EBE8E3 100%)",
       },
       colors: {
         primary: "#2B7FFF",
         "primary-dark": "#1A6FEF",
         accent: "#F59E0B",
-        surface: "#FFFFFF",
-        "bg-base": "#F8FAFF",
+        surface: "#FAFAF7",
+        "bg-base": "#F5F5F0",
         "text-primary": "#0F172A",
         "text-muted": "#64748B",
-        "border-soft": "#E8EEFB",
+        "border-soft": "#E5E3DE",
         
         // Keeping previous colors for backward compatibility in case they are used in Navbar/etc
         CartRed: "#E43023",
@@ -29,8 +29,8 @@ const config: Config = {
         navy: "#0F172A",
         "slate-gray": "#64748B",
         "orange-accent": "#F97316",
-        "bg-gradient-start": "#F0F4FF",
-        "bg-gradient-end": "#EEF2FF",
+        "bg-gradient-start": "#EFEDE8",
+        "bg-gradient-end": "#EBE8E3",
       },
       keyframes: {
         marquee: {

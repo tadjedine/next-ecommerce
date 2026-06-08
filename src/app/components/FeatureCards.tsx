@@ -8,23 +8,23 @@ export default function FeatureCards() {
   const features = [
     {
       icon: <Truck size={24} />,
-      title: "Livraison Rapide",
-      desc: "Livraison gratuite à partir de 49€ d'achat. Expédition sous 24h pour toutes vos commandes."
+      title: "Fast Shipping",
+      desc: "Free delivery on orders over $49. All orders shipped within 24 hours for a seamless experience."
     },
     {
       icon: <ShieldCheck size={24} />,
-      title: "Paiement Sécurisé",
-      desc: "Transactions protégées par un chiffrement SSL. Visa, Mastercard, PayPal et paiement en 3x acceptés."
+      title: "Secure Payment",
+      desc: "Transactions protected by SSL encryption. Visa, Mastercard, PayPal and installment payments accepted."
     },
     {
       icon: <RotateCcw size={24} />,
-      title: "Retours Gratuits",
-      desc: "Vous disposez de 30 jours pour changer d'avis. Retour et remboursement simples et sans frais."
+      title: "Free Returns",
+      desc: "You have 30 days to change your mind. Simple and free returns and refunds, no questions asked."
     },
     {
       icon: <Headphones size={24} />,
-      title: "Service Client 7j/7",
-      desc: "Notre équipe vous accompagne par chat, email ou téléphone pour répondre à toutes vos questions."
+      title: "24/7 Customer Support",
+      desc: "Our team is here to help via chat, email, or phone to answer all your questions anytime."
     },
   ];
 
@@ -32,9 +32,9 @@ export default function FeatureCards() {
     <div className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-6">
         <FadeUpOnScroll className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-navy mb-4">Pourquoi nous choisir ?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-navy mb-4">Why Choose Us?</h2>
           <p className="text-slate-gray max-w-2xl mx-auto">
-            Des avantages concrets pour une expérience d&apos;achat sans compromis. Votre satisfaction est notre priorité.
+            Real benefits for a no-compromise shopping experience. Your satisfaction is our top priority.
           </p>
         </FadeUpOnScroll>
 

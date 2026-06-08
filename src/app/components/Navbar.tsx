@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { ChevronDown, Globe, Moon, ShoppingCart, LayoutGrid, Music, Gift, ArrowRight } from "lucide-react";
+import { ChevronDown, Globe, Moon, ShoppingCart, Shirt, Gem, Tag, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CartDrawer from "./cart/CartDrawer";
 import { useCart } from "@/lib/CartContext";
@@ -22,60 +22,69 @@ const MegaMenu = ({ isOpen, onMouseEnter, onMouseLeave }: { isOpen: boolean; onM
         >
           <div className="max-w-7xl mx-auto px-6 py-8 flex gap-12">
             <div className="w-1/3 bg-bg-base rounded-2xl p-8 flex flex-col items-start justify-center">
-              <h3 className="text-xl font-bold text-text-primary mb-2">Nouveautés 2026</h3>
-              <p className="text-text-muted mb-6 text-sm">Découvrez nos dernières collections avec des designs exclusifs.</p>
+              <h3 className="text-xl font-bold text-text-primary mb-2">New Arrivals 2026</h3>
+              <p className="text-text-muted mb-6 text-sm">Discover our latest collections with exclusive designs.</p>
               <Link href="/shop" className="text-primary font-semibold flex items-center gap-2 hover:gap-3 transition-all">
-                Explorer <ArrowRight size={16} />
+                Explore <ArrowRight size={16} />
               </Link>
             </div>
             <div className="w-2/3 grid grid-cols-3 gap-8">
               <div>
-                <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-6">Électronique</h4>
+                <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-6">Women</h4>
                 <div className="space-y-6">
-                  <Link href="/shop/electronics" className="group flex items-start gap-4">
+                  <Link href="/shop/women" className="group flex items-start gap-4">
                     <div className="p-2 bg-bg-base rounded-lg group-hover:bg-primary group-hover:text-white transition-colors text-text-muted">
-                      <LayoutGrid size={20} />
+                      <Shirt size={20} />
                     </div>
                     <div>
-                      <div className="font-semibold text-text-primary group-hover:text-primary transition-colors">Ordinateurs</div>
-                      <div className="text-xs text-text-muted">Laptops et PC de bureau</div>
+                      <div className="font-semibold text-text-primary group-hover:text-primary transition-colors">Dresses</div>
+                      <div className="text-xs text-text-muted">Casual & evening styles</div>
                     </div>
                   </Link>
-                  <Link href="/shop/electronics" className="group flex items-start gap-4">
+                  <Link href="/shop/women" className="group flex items-start gap-4">
                     <div className="p-2 bg-bg-base rounded-lg group-hover:bg-primary group-hover:text-white transition-colors text-text-muted">
-                      <Music size={20} />
+                      <Gem size={20} />
                     </div>
                     <div>
-                      <div className="font-semibold text-text-primary group-hover:text-primary transition-colors">Audio</div>
-                      <div className="text-xs text-text-muted">Casques et enceintes</div>
+                      <div className="font-semibold text-text-primary group-hover:text-primary transition-colors">Tops & Blouses</div>
+                      <div className="text-xs text-text-muted">Everyday essentials</div>
                     </div>
                   </Link>
                 </div>
               </div>
               <div>
-                <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-6">Accessoires</h4>
+                <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-6">Men</h4>
                 <div className="space-y-6">
-                  <Link href="/shop/accessories" className="group flex items-start gap-4">
+                  <Link href="/shop/men" className="group flex items-start gap-4">
                     <div className="p-2 bg-bg-base rounded-lg group-hover:bg-primary group-hover:text-white transition-colors text-text-muted">
-                      <Gift size={20} />
+                      <Shirt size={20} />
                     </div>
                     <div>
-                      <div className="font-semibold text-text-primary group-hover:text-primary transition-colors">Cadeaux</div>
-                      <div className="text-xs text-text-muted">Idées originales</div>
+                      <div className="font-semibold text-text-primary group-hover:text-primary transition-colors">Jackets & Coats</div>
+                      <div className="text-xs text-text-muted">Outerwear for every season</div>
+                    </div>
+                  </Link>
+                  <Link href="/shop/men" className="group flex items-start gap-4">
+                    <div className="p-2 bg-bg-base rounded-lg group-hover:bg-primary group-hover:text-white transition-colors text-text-muted">
+                      <Gem size={20} />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-text-primary group-hover:text-primary transition-colors">Shirts</div>
+                      <div className="text-xs text-text-muted">Casual & formal fits</div>
                     </div>
                   </Link>
                 </div>
               </div>
               <div>
-                <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-6">Promotions</h4>
+                <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-6">On Sale</h4>
                 <div className="space-y-6">
                   <Link href="/shop/sale" className="group flex items-start gap-4">
                     <div className="p-2 bg-orange-50 rounded-lg group-hover:bg-accent group-hover:text-white transition-colors text-orange-500">
-                      <Gift size={20} />
+                      <Tag size={20} />
                     </div>
                     <div>
-                      <div className="font-semibold text-text-primary group-hover:text-accent transition-colors">Ventes Flash</div>
-                      <div className="text-xs text-text-muted">Jusqu'à -50%</div>
+                      <div className="font-semibold text-text-primary group-hover:text-accent transition-colors">Flash Sales</div>
+                      <div className="text-xs text-text-muted">Up to 50% off</div>
                     </div>
                   </Link>
                 </div>
@@ -117,10 +126,10 @@ export default function Navbar() {
               onMouseEnter={() => setMegaMenuOpen(true)}
               onMouseLeave={() => setMegaMenuOpen(false)}
             >
-              Boutique <ChevronDown size={16} />
+              Shop <ChevronDown size={16} />
             </div>
-            <Link href="/shop/sale" className="text-text-muted hover:text-text-primary font-medium transition-colors">Promotions</Link>
-            <Link href="/" className="text-text-muted hover:text-text-primary font-medium transition-colors">À propos</Link>
+            <Link href="/shop/sale" className="text-text-muted hover:text-text-primary font-medium transition-colors">Sale</Link>
+            <Link href="/" className="text-text-muted hover:text-text-primary font-medium transition-colors">About</Link>
           </div>
 
           <div className="flex items-center gap-4 text-text-muted">
@@ -140,7 +149,7 @@ export default function Navbar() {
               )}
             </div>
             <Link href="/auth" className="hidden sm:flex ml-4 bg-primary text-white px-6 py-2.5 rounded-full font-medium hover:bg-primary-dark transition-colors">
-              Connexion
+              Sign In
             </Link>
           </div>
         </div>

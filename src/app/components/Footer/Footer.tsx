@@ -17,7 +17,7 @@ export default function Footer() {
               <span className="font-extrabold text-2xl tracking-tight">Store</span>
             </div>
             <p className="text-white/60 mb-8 max-w-xs leading-relaxed">
-              L'expérience d'achat la plus innovante au monde. Quality products for a better everyday life.
+              The most innovative shopping experience. Quality products for a better everyday life.
             </p>
             <div className="flex gap-3">
               <a href="#" className="p-2.5 rounded-full border border-white/10 hover:border-primary hover:text-primary transition-colors">

@@ -35,7 +35,7 @@ export default function Marquee() {
         <div className="flex whitespace-nowrap animate-marquee">
           {[...Array(2)].map((_, arrayIndex) => (
             <div key={arrayIndex} className="flex shrink-0">
-              {["Chargement…"].map((item, i) => (
+              {["Loading…"].map((item, i) => (
                 <div key={`${arrayIndex}-${i}`} className="flex items-center">
                   <span className="text-sm font-semibold text-slate-gray uppercase tracking-widest px-8">
                     {item}
