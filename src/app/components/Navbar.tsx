@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { ChevronDown, Globe, Moon, ShoppingCart, Shirt, Gem, Tag, ArrowRight } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronDown, Globe, Moon, ShoppingCart, Shirt, Gem, Tag, ArrowRight, User, LogOut, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CartDrawer from "./cart/CartDrawer";
 import { useCart } from "@/lib/CartContext";
+import { useAuth } from "@/lib/AuthContext";
 
 const MegaMenu = ({ isOpen, onMouseEnter, onMouseLeave }: { isOpen: boolean; onMouseEnter: () => void; onMouseLeave: () => void }) => {
   return (
@@ -101,7 +102,12 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  
   const { totalQuantity } = useCart();
+  const { user, isAuthenticated, logout } = useAuth();
+  
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -109,6 +115,17 @@ export default function Navbar() {
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Close user dropdown if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
@@ -132,7 +149,7 @@ export default function Navbar() {
             <Link href="/" className="text-text-muted hover:text-text-primary font-medium transition-colors">About</Link>
           </div>
 
-          <div className="flex items-center gap-4 text-text-muted">
+          <div className="flex items-center gap-4 text-text-muted relative">
             <div className="hidden lg:flex items-center gap-4">
               <span className="text-sm font-medium">EUR</span>
               <Globe size={20} className="cursor-pointer hover:text-text-primary transition-colors" />
@@ -148,9 +165,64 @@ export default function Navbar() {
                 <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{totalQuantity}</span>
               )}
             </div>
-            <Link href="/auth" className="hidden sm:flex ml-4 bg-primary text-white px-6 py-2.5 rounded-full font-medium hover:bg-primary-dark transition-colors">
-              Sign In
-            </Link>
+            
+            {isAuthenticated ? (
+              <div className="relative ml-4" ref={userMenuRef}>
+                <button 
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors text-primary font-bold shadow-sm border border-slate-200"
+                >
+                  {user?.firstname ? user.firstname.charAt(0).toUpperCase() : <User size={20} />}
+                </button>
+
+                <AnimatePresence>
+                  {userMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-3 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden"
+                    >
+                      <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+                        <p className="font-bold text-navy text-sm">Hi, {user?.firstname}!</p>
+                        <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                      </div>
+                      <div className="p-2 flex flex-col">
+                        <Link 
+                          href="/account" 
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-primary hover:bg-blue-50 transition-colors"
+                        >
+                          <User size={16} /> My Account
+                        </Link>
+                        <Link 
+                          href="/orders" 
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-primary hover:bg-blue-50 transition-colors"
+                        >
+                          <FileText size={16} /> Orders
+                        </Link>
+                        <div className="h-px bg-slate-100 my-1 mx-2"></div>
+                        <button 
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            logout();
+                          }}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors w-full text-left"
+                        >
+                          <LogOut size={16} /> Logout
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <Link href="/auth" className="hidden sm:flex ml-4 bg-primary text-white px-6 py-2.5 rounded-full font-medium hover:bg-primary-dark transition-colors">
+                Sign In
+              </Link>
+            )}
           </div>
         </div>
         <MegaMenu isOpen={megaMenuOpen} onMouseEnter={() => setMegaMenuOpen(true)} onMouseLeave={() => setMegaMenuOpen(false)} />

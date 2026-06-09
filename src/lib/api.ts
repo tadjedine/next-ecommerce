@@ -1,6 +1,8 @@
 // ─── API Types ───────────────────────────────────────────────
 // These types mirror the JSON shapes returned by the Laravel API.
 
+import { authFetch } from "./auth";
+
 export interface ApiImageUrls {
   original: string;
   home: string;
@@ -96,6 +98,74 @@ export interface ApiCart {
   updated_at: string | null;
 }
 
+export interface ApiAddress {
+  id: number;
+  alias: string;
+  firstname: string;
+  lastname: string;
+  company: string | null;
+  address1: string;
+  address2: string | null;
+  postcode: string | null;
+  city: string;
+  id_country: number;
+  phone: string | null;
+  phone_mobile: string | null;
+}
+
+export interface ApiCarrier {
+  id: number;
+  name: string;
+  is_free: boolean;
+  delay: string | null;
+}
+
+export interface ApiCountry {
+  id: number;
+  name: string;
+  iso_code: string;
+  call_prefix: number;
+}
+
+export interface ApiCheckoutSummary {
+  cart_id: number;
+  customer_id: number;
+  delivery_address: ApiAddress | null;
+  invoice_address: ApiAddress | null;
+  carrier: ApiCarrier | null;
+  items: ApiCartItem[];
+  total_quantity: number;
+  subtotal: number;
+  discount_summary: any;
+  total_discounts: number;
+  shipping_cost: number;
+  total: number;
+  is_ready: boolean;
+  validation_errors: any[];
+}
+
+export interface ApiOrder {
+  id: number;
+  reference: string;
+  current_state: number;
+  payment: string;
+  total_paid: number;
+  date_add: string;
+  total_products?: number;
+  total_discounts?: number;
+  total_shipping?: number;
+  total_paid_real?: number;
+  details?: ApiOrderDetail[];
+}
+
+export interface ApiOrderDetail {
+  product_id: number;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+}
+
 // ─── API Client ──────────────────────────────────────────────
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
@@ -161,49 +231,114 @@ export async function getProductImages(productId: number) {
   return apiFetch<{ data: ApiProductImage[] }>(`/v1/products/${productId}/images`);
 }
 
-// ─── Cart ────────────────────────────────────────────────────
+// ─── Cart (Auth Required) ────────────────────────────────────
 
-export async function getOrCreateCart(customerId: number): Promise<ApiCart> {
-  const res = await fetch(`${API_BASE}/v1/cart`, {
+export async function getOrCreateCart(): Promise<ApiCart> {
+  const json = await authFetch<{ data: ApiCart }>(`/v1/cart`, {
     method: "POST",
-    headers: { "Accept": "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify({ id_customer: customerId }),
+    body: JSON.stringify({}),
   });
-  if (!res.ok) throw new Error(`Cart fetch failed: ${res.status}`);
-  const json = await res.json();
   return json.data;
 }
 
-export async function addCartItem(customerId: number, productId: number, quantity: number = 1): Promise<ApiCart> {
-  const res = await fetch(`${API_BASE}/v1/cart/items`, {
+export async function addCartItem(productId: number, quantity: number = 1): Promise<ApiCart> {
+  const json = await authFetch<{ data: ApiCart }>(`/v1/cart/items`, {
     method: "POST",
-    headers: { "Accept": "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify({ id_customer: customerId, id_product: productId, quantity }),
+    body: JSON.stringify({ id_product: productId, quantity }),
   });
-  if (!res.ok) throw new Error(`Add to cart failed: ${res.status}`);
-  const json = await res.json();
   return json.data;
 }
 
-export async function updateCartItem(customerId: number, productId: number, quantity: number): Promise<ApiCart> {
-  const res = await fetch(`${API_BASE}/v1/cart/items/${productId}`, {
+export async function updateCartItem(productId: number, quantity: number): Promise<ApiCart> {
+  const json = await authFetch<{ data: ApiCart }>(`/v1/cart/items/${productId}`, {
     method: "PUT",
-    headers: { "Accept": "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify({ id_customer: customerId, quantity }),
+    body: JSON.stringify({ quantity }),
   });
-  if (!res.ok) throw new Error(`Update cart failed: ${res.status}`);
-  const json = await res.json();
   return json.data;
 }
 
-export async function removeCartItem(customerId: number, productId: number): Promise<ApiCart> {
-  const res = await fetch(`${API_BASE}/v1/cart/items/${productId}`, {
+export async function removeCartItem(productId: number): Promise<ApiCart> {
+  const json = await authFetch<{ data: ApiCart }>(`/v1/cart/items/${productId}`, {
     method: "DELETE",
-    headers: { "Accept": "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify({ id_customer: customerId, quantity: 0 }),
+    body: JSON.stringify({ quantity: 0 }),
   });
-  if (!res.ok) throw new Error(`Remove from cart failed: ${res.status}`);
-  const json = await res.json();
   return json.data;
 }
 
+// ─── Addresses (Auth Required) ───────────────────────────────
+
+export async function getAddresses(): Promise<ApiAddress[]> {
+  const res = await authFetch<{ data: ApiAddress[] }>("/v1/addresses");
+  return res.data;
+}
+
+export async function createAddress(data: Partial<ApiAddress>): Promise<ApiAddress> {
+  const res = await authFetch<{ data: ApiAddress }>("/v1/addresses", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  return res.data;
+}
+
+export async function updateAddress(id: number, data: Partial<ApiAddress>): Promise<ApiAddress> {
+  const res = await authFetch<{ data: ApiAddress }>(`/v1/addresses/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return res.data;
+}
+
+export async function deleteAddress(id: number): Promise<void> {
+  await authFetch(`/v1/addresses/${id}`, { method: "DELETE" });
+}
+
+// ─── Checkout (Auth Required) ────────────────────────────────
+
+export async function getCheckoutSummary(): Promise<ApiCheckoutSummary> {
+  return authFetch<ApiCheckoutSummary>("/v1/checkout/summary");
+}
+
+export async function setCheckoutAddresses(deliveryId: number, invoiceId?: number): Promise<any> {
+  return authFetch("/v1/checkout/addresses", {
+    method: "PUT",
+    body: JSON.stringify({ id_address_delivery: deliveryId, id_address_invoice: invoiceId || deliveryId }),
+  });
+}
+
+export async function setCheckoutCarrier(carrierId: number): Promise<any> {
+  return authFetch("/v1/checkout/carrier", {
+    method: "PUT",
+    body: JSON.stringify({ id_carrier: carrierId }),
+  });
+}
+
+export async function confirmCheckout(paymentMethod: string): Promise<any> {
+  return authFetch("/v1/checkout/confirm", {
+    method: "POST",
+    body: JSON.stringify({ payment_method: paymentMethod }),
+  });
+}
+
+// ─── Orders (Auth Required) ──────────────────────────────────
+
+export async function getOrders(): Promise<ApiOrder[]> {
+  const res = await authFetch<{ data: ApiOrder[] }>("/v1/orders");
+  return res.data;
+}
+
+export async function getOrder(id: number): Promise<ApiOrder> {
+  const res = await authFetch<{ data: ApiOrder }>(`/v1/orders/${id}`);
+  return res.data;
+}
+
+// ─── Public Lists ────────────────────────────────────────────
+
+export async function getCarriers(): Promise<ApiCarrier[]> {
+  const res = await apiFetch<{ data: ApiCarrier[] }>("/v1/carriers");
+  return res.data;
+}
+
+export async function getCountries(): Promise<ApiCountry[]> {
+  const res = await apiFetch<{ data: ApiCountry[] }>("/v1/countries");
+  return res.data;
+}

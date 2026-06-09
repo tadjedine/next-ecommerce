@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Mail, Lock, ArrowRight, Gamepad2, Music, Gift, EyeOff, Eye, User, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageTransition } from "../../components/motion/PageTransition";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
@@ -23,6 +24,7 @@ export default function AuthPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -41,7 +43,7 @@ export default function AuthPage() {
             lastname, 
           };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"}${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -62,8 +64,8 @@ export default function AuthPage() {
       const data = await response.json();
       console.log(`${activeTab} successful:`, data);
       
-      if (data.token) {
-        localStorage.setItem("token", data.token);
+      if (data.token && data.user) {
+        login(data.token, data.user);
       }
 
       router.push('/');
@@ -101,7 +103,7 @@ export default function AuthPage() {
           </div>
           <h1 className="text-5xl font-extrabold text-navy mb-4 tracking-tight">Store</h1>
           <p className="text-lg text-slate-gray max-w-md mx-auto leading-relaxed">
-            L'expérience d'achat la plus innovante au monde.
+            The world's most innovative shopping experience.
           </p>
         </div>
       </div>
@@ -111,7 +113,7 @@ export default function AuthPage() {
         {/* Absolute Return Button */}
         <div className="absolute top-4 left-4 z-20">
           <Link href="/" className="flex items-center gap-2 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-slate-200 text-slate-600 hover:text-navy hover:bg-slate-50 transition-all text-xs font-medium hover:scale-105 active:scale-95">
-            <ArrowLeft size={14} /> Retour
+            <ArrowLeft size={14} /> Back
           </Link>
         </div>
 
@@ -122,10 +124,10 @@ export default function AuthPage() {
               
               <motion.div layout="position" className="mb-6">
                 <h2 className="text-2xl font-extrabold text-navy mb-1.5">
-                  {activeTab === "login" ? "Bon Retour" : "Créer un compte"}
+                  {activeTab === "login" ? "Welcome Back" : "Create Account"}
                 </h2>
                 <p className="text-sm text-slate-gray">
-                  {activeTab === "login" ? "Veuillez vous connecter pour continuer." : "Rejoignez-nous pour une expérience unique."}
+                  {activeTab === "login" ? "Please sign in to continue." : "Join us for a unique experience."}
                 </p>
               </motion.div>
 
@@ -136,14 +138,14 @@ export default function AuthPage() {
                   onClick={() => { setActiveTab("login"); setErrorMsg(""); }}
                   className={`flex-1 pb-3 text-sm font-semibold transition-colors ${activeTab === "login" ? "text-primary-blue" : "text-slate-500 hover:text-navy"}`}
                 >
-                  Connexion
+                  Sign In
                 </button>
                 <button
                   type="button"
                   onClick={() => { setActiveTab("register"); setErrorMsg(""); }}
                   className={`flex-1 pb-3 text-sm font-semibold transition-colors ${activeTab === "register" ? "text-primary-blue" : "text-slate-500 hover:text-navy"}`}
                 >
-                  Inscription
+                  Sign Up
                 </button>
                 <motion.div
                   layoutId="tab-indicator"
@@ -178,12 +180,12 @@ export default function AuthPage() {
                       className="flex gap-3 overflow-hidden"
                     >
                       <div className="flex-1 pb-1">
-                        <label className="block text-[13px] font-semibold text-navy mb-1">Prénom</label>
+                        <label className="block text-[13px] font-semibold text-navy mb-1">First Name</label>
                         <div className="relative">
                           <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                           <input
                             type="text"
-                            placeholder="Jean"
+                            placeholder="John"
                             value={firstname}
                             onChange={(e) => setFirstname(e.target.value)}
                             className="w-full pl-9 pr-3 h-11 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all placeholder:text-slate-400 text-navy"
@@ -192,12 +194,12 @@ export default function AuthPage() {
                         </div>
                       </div>
                       <div className="flex-1 pb-1">
-                        <label className="block text-[13px] font-semibold text-navy mb-1">Nom</label>
+                        <label className="block text-[13px] font-semibold text-navy mb-1">Last Name</label>
                         <div className="relative">
                           <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                           <input
                             type="text"
-                            placeholder="Dupont"
+                            placeholder="Doe"
                             value={lastname}
                             onChange={(e) => setLastname(e.target.value)}
                             className="w-full pl-9 pr-3 h-11 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all placeholder:text-slate-400 text-navy"
@@ -210,12 +212,12 @@ export default function AuthPage() {
                 </AnimatePresence>
 
                 <motion.div layout="position">
-                  <label className="block text-[13px] font-semibold text-navy mb-1">Adresse Email</label>
+                  <label className="block text-[13px] font-semibold text-navy mb-1">Email Address</label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input
                       type="email"
-                      placeholder="nom@exemple.com"
+                      placeholder="name@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full pl-9 pr-3 h-11 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all placeholder:text-slate-400 text-navy"
@@ -226,10 +228,10 @@ export default function AuthPage() {
 
                 <motion.div layout="position">
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-[13px] font-semibold text-navy">Mot de passe</label>
+                    <label className="block text-[13px] font-semibold text-navy">Password</label>
                     {activeTab === "login" && (
                       <Link href="#" className="text-[13px] font-medium text-primary-blue hover:text-blue-700 transition-colors">
-                        Mot de passe oublié ?
+                        Forgot password?
                       </Link>
                     )}
                   </div>
@@ -265,7 +267,7 @@ export default function AuthPage() {
                       className="overflow-hidden"
                     >
                       <div className="pt-1 pb-1">
-                        <label className="block text-[13px] font-semibold text-navy mb-1">Confirmer le mot de passe</label>
+                        <label className="block text-[13px] font-semibold text-navy mb-1">Confirm Password</label>
                         <div className="relative">
                           <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                           <input
@@ -300,14 +302,14 @@ export default function AuthPage() {
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
-                      {activeTab === "login" ? "Se connecter" : "S'inscrire"} <ArrowRight size={16} />
+                      {activeTab === "login" ? "Sign In" : "Sign Up"} <ArrowRight size={16} />
                     </>
                   )}
                 </motion.button>
               </form>
 
               <motion.div layout="position" className="my-5 flex items-center gap-4 before:h-px before:flex-1 before:bg-slate-100 after:h-px after:flex-1 after:bg-slate-100">
-                <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">ou avec</span>
+                <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">or with</span>
               </motion.div>
 
               <motion.div layout="position" className="grid grid-cols-2 gap-3">
@@ -330,7 +332,7 @@ export default function AuthPage() {
 
               <motion.div layout="position" className="mt-6 text-center">
                 <Link href="/" className="text-[13px] font-semibold text-slate-500 hover:text-primary-blue transition-colors underline-offset-4 hover:underline">
-                  Continuer en tant qu'invité
+                  Continue as guest
                 </Link>
               </motion.div>
 

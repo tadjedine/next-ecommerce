@@ -8,9 +8,7 @@ import {
   updateCartItem as apiUpdateItem,
   removeCartItem as apiRemoveItem,
 } from "@/lib/api";
-
-// Hardcoded customer ID until auth integration
-const CUSTOMER_ID = 8;
+import { useAuth } from "@/lib/AuthContext";
 
 interface CartContextValue {
   cart: ApiCart | null;
@@ -27,53 +25,65 @@ interface CartContextValue {
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [cart, setCart] = useState<ApiCart | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refreshCart = useCallback(async () => {
+    if (!isAuthenticated) {
+      setCart(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
-      const data = await getOrCreateCart(CUSTOMER_ID);
+      const data = await getOrCreateCart();
       setCart(data);
     } catch (err) {
       console.error("Failed to fetch cart:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    refreshCart();
-  }, [refreshCart]);
+    if (!authLoading) {
+      refreshCart();
+    }
+  }, [authLoading, refreshCart]);
 
   const addItem = useCallback(async (productId: number, quantity: number = 1) => {
+    if (!isAuthenticated) throw new Error("Must be logged in to add to cart");
     try {
-      const data = await apiAddItem(CUSTOMER_ID, productId, quantity);
+      const data = await apiAddItem(productId, quantity);
       setCart(data);
     } catch (err) {
       console.error("Failed to add item to cart:", err);
       throw err;
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const updateItem = useCallback(async (productId: number, quantity: number) => {
+    if (!isAuthenticated) throw new Error("Must be logged in to update cart");
     try {
-      const data = await apiUpdateItem(CUSTOMER_ID, productId, quantity);
+      const data = await apiUpdateItem(productId, quantity);
       setCart(data);
     } catch (err) {
       console.error("Failed to update cart item:", err);
       throw err;
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const removeItem = useCallback(async (productId: number) => {
+    if (!isAuthenticated) throw new Error("Must be logged in to remove cart item");
     try {
-      const data = await apiRemoveItem(CUSTOMER_ID, productId);
+      const data = await apiRemoveItem(productId);
       setCart(data);
     } catch (err) {
       console.error("Failed to remove cart item:", err);
       throw err;
     }
-  }, []);
+  }, [isAuthenticated]);
 
   return (
     <CartContext.Provider
@@ -82,7 +92,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         items: cart?.items ?? [],
         totalQuantity: cart?.total_quantity ?? 0,
         subtotal: cart?.subtotal ?? 0,
-        loading,
+        loading: loading || authLoading,
         addItem,
         updateItem,
         removeItem,

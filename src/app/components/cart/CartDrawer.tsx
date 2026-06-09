@@ -4,6 +4,7 @@ import { X, Minus, Plus, Trash2, ShoppingBag, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/lib/CartContext";
+import { useAuth } from "@/lib/AuthContext";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface CartDrawerProps {
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, totalQuantity, subtotal, updateItem, removeItem, loading } = useCart();
+  const { isAuthenticated } = useAuth();
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const handleUpdateQty = async (productId: number, currentQty: number, delta: number) => {
@@ -161,9 +163,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 </div>
                 
                 <div className="flex flex-col gap-3">
-                  <button className="w-full py-4 bg-primary text-white rounded-full font-bold shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors">
+                  <Link href={isAuthenticated ? "/checkout" : "/auth"} onClick={onClose} className="w-full py-4 bg-primary text-white rounded-full font-bold shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors text-center block">
                     Checkout
-                  </button>
+                  </Link>
                   <button 
                     onClick={onClose}
                     className="w-full py-3 text-sm font-semibold text-text-muted hover:text-text-primary transition-colors"
