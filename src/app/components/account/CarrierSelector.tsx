@@ -1,28 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
 import { Truck, CheckCircle2 } from "lucide-react";
-import { ApiCarrier, getCarriers } from "@/lib/api";
+import { ApiCarrier } from "@/lib/api";
 
 interface CarrierSelectorProps {
+  carriers: ApiCarrier[];
+  loading: boolean;
   selectedId: number | null;
   onSelect: (id: number) => void;
 }
 
-export default function CarrierSelector({ selectedId, onSelect }: CarrierSelectorProps) {
-  const [carriers, setCarriers] = useState<ApiCarrier[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getCarriers()
-      .then(data => {
-        setCarriers(data);
-        if (!selectedId && data.length > 0) {
-          onSelect(data[0].id);
-        }
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
+export default function CarrierSelector({ carriers, loading, selectedId, onSelect }: CarrierSelectorProps) {
   if (loading) return <div className="animate-pulse h-24 bg-slate-100 rounded-xl w-full"></div>;
   if (carriers.length === 0) return <div className="text-sm text-slate-500">No carriers available.</div>;
 

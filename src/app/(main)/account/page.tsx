@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Plus, User, MapPin, Truck, CreditCard, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/AuthContext";
-import { ApiAddress, getAddresses, createAddress, updateAddress, deleteAddress } from "@/lib/api";
+import { ApiAddress, ApiCarrier, getAddresses, getCarriers, createAddress, updateAddress, deleteAddress } from "@/lib/api";
 import AddressCard from "@/app/components/account/AddressCard";
 import AddressForm from "@/app/components/account/AddressForm";
 import CarrierSelector from "@/app/components/account/CarrierSelector";
@@ -17,6 +17,8 @@ export default function AccountPage() {
   const [activeTab, setActiveTab] = useState<"addresses" | "carrier" | "payment">("addresses");
   const [addresses, setAddresses] = useState<ApiAddress[]>([]);
   const [loading, setLoading] = useState(true);
+  const [carriers, setCarriers] = useState<ApiCarrier[]>([]);
+  const [carriersLoading, setCarriersLoading] = useState(true);
   
   // Forms
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -35,6 +37,7 @@ export default function AccountPage() {
   useEffect(() => {
     if (isAuthenticated) {
       loadAddresses();
+      loadCarriers();
       // Load preferences from localStorage
       const savedCarrier = localStorage.getItem("pref_carrier");
       const savedPayment = localStorage.getItem("pref_payment");
@@ -52,6 +55,23 @@ export default function AccountPage() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCarriers = async () => {
+    try {
+      setCarriersLoading(true);
+      const data = await getCarriers();
+      setCarriers(data);
+      // Auto-select first carrier if none selected
+      const savedCarrier = localStorage.getItem("pref_carrier");
+      if (!savedCarrier && data.length > 0) {
+        handleCarrierChange(data[0].id);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCarriersLoading(false);
     }
   };
 
@@ -186,7 +206,7 @@ export default function AccountPage() {
                       <h2 className="text-xl font-bold text-navy mb-1">Preferred Carrier</h2>
                       <p className="text-sm text-slate-500">This carrier will be pre-selected during checkout.</p>
                     </div>
-                    <CarrierSelector selectedId={prefCarrier} onSelect={handleCarrierChange} />
+                    <CarrierSelector carriers={carriers} loading={carriersLoading} selectedId={prefCarrier} onSelect={handleCarrierChange} />
                   </motion.div>
                 )}
 
