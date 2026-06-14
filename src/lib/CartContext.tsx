@@ -16,7 +16,7 @@ interface CartContextValue {
   totalQuantity: number;
   subtotal: number;
   loading: boolean;
-  addItem: (productId: number, quantity?: number) => Promise<void>;
+  addItem: (productId: number, quantity?: number, productAttributeId?: number) => Promise<void>;
   updateItem: (productId: number, quantity: number) => Promise<void>;
   removeItem: (productId: number) => Promise<void>;
   refreshCart: () => Promise<void>;
@@ -52,10 +52,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [authLoading, refreshCart]);
 
-  const addItem = useCallback(async (productId: number, quantity: number = 1) => {
+  const addItem = useCallback(async (productId: number, quantity: number = 1, productAttributeId: number = 0) => {
     if (!isAuthenticated) throw new Error("Must be logged in to add to cart");
     try {
-      const data = await apiAddItem(productId, quantity);
+      const data = await apiAddItem(productId, quantity, productAttributeId);
       setCart(data);
     } catch (err) {
       console.error("Failed to add item to cart:", err);

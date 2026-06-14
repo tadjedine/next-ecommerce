@@ -1,32 +1,58 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import CatalogLayout from "../../components/catalog/CatalogLayout";
-import { clothingFilters } from "@/lib/mock/filters";
-import { ApiProduct } from "@/lib/api";
+import { FilterState } from "../../components/catalog/FilterSidebar";
+import { ApiProduct, ApiFiltersResponse, getProducts, getFilters } from "@/lib/api";
+
+const initialFilterState: FilterState = {
+  attributes: {},
+  features: {},
+};
 
 export default function ShopPage() {
   const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [apiFilters, setApiFilters] = useState<ApiFiltersResponse | null>(null);
+  const [filterState, setFilterState] = useState<FilterState>(initialFilterState);
+  const [sort, setSort] = useState<string>("newest");
   const [loading, setLoading] = useState(true);
 
+  // Fetch API filters configuration on mount
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchFiltersConfig = async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/v1/products?per_page=24`
-        );
-        const json = await res.json();
-        setProducts(json.data as ApiProduct[]);
+        const filters = await getFilters();
+        setApiFilters(filters);
       } catch (err) {
-        console.error("Failed to fetch products:", err);
-      } finally {
-        setLoading(false);
+        console.error("Failed to fetch filters config:", err);
       }
     };
-
-    fetchProducts();
+    fetchFiltersConfig();
   }, []);
 
-  if (loading) {
+  // Fetch products whenever filters or sort change
+  const fetchFilteredProducts = useCallback(async () => {
+    try {
+      const res = await getProducts({
+        per_page: 24,
+        sort,
+        price_min: filterState.price_min,
+        price_max: filterState.price_max,
+        attributes: filterState.attributes,
+        features: filterState.features,
+      });
+      setProducts(res.data);
+    } catch (err) {
+      console.error("Failed to fetch filtered products:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [filterState, sort]);
+
+  useEffect(() => {
+    fetchFilteredProducts();
+  }, [fetchFilteredProducts]);
+
+  if (loading || !apiFilters) {
     return (
       <div className="min-h-screen bg-bg-base pt-20 pb-24 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
@@ -39,7 +65,12 @@ export default function ShopPage() {
       title="All Products"
       breadcrumb="Home > Shop"
       productCount={products.length}
-      filters={clothingFilters}
+      apiFilters={apiFilters}
+      filterState={filterState}
+      onFilterChange={setFilterState}
+      onClearFilters={() => setFilterState(initialFilterState)}
+      sort={sort}
+      onSortChange={setSort}
       products={products}
     />
   );

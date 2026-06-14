@@ -1,12 +1,13 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Minus, Plus, Heart, ShoppingBag, ShieldCheck, Truck, RefreshCw, ImageOff, Loader2, Check } from "lucide-react";
 import { mockReviews } from "@/lib/mock/dummyData";
 import { FadeUpOnScroll } from "../../../components/motion/FadeUpOnScroll";
 import ProductCard from "../../../components/ProductCard";
-import { ApiProduct, ApiProductImage } from "@/lib/api";
+import VariantSelector from "../../../components/product/VariantSelector";
+import { ApiProduct, ApiProductImage, ApiCombination } from "@/lib/api";
 import { useParams } from "next/navigation";
 import { useCart } from "@/lib/CartContext";
 
@@ -16,6 +17,7 @@ export default function ProductDetailPage() {
 
   const [product, setProduct] = useState<ApiProduct | null>(null);
   const [allImages, setAllImages] = useState<string[]>([]);
+  const [imageMap, setImageMap] = useState<Record<number, string>>({}); // id_image → url
   const [related, setRelated] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState<string>("");
@@ -25,10 +27,64 @@ export default function ProductDetailPage() {
   const [addedToCart, setAddedToCart] = useState(false);
   const { addItem } = useCart();
 
+  // Combination selection state
+  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, number>>({});
+
+  const hasCombinations = !!(product?.combinations && product.combinations.length > 0);
+
+  // Find the combination matching current selections
+  const selectedCombination = useMemo<ApiCombination | null>(() => {
+    if (!hasCombinations || !product?.combinations || !product?.attribute_groups) return null;
+    // Only look for a match when all groups have been selected
+    const allGroupsSelected = product.attribute_groups.every(
+      (g) => selectedAttributes[g.name] !== undefined
+    );
+    if (!allGroupsSelected) return null;
+
+    return (
+      product.combinations.find((combo) =>
+        Object.entries(selectedAttributes).every(
+          ([groupName, attrId]) => combo.attributes[groupName]?.id === attrId
+        )
+      ) || null
+    );
+  }, [hasCombinations, product, selectedAttributes]);
+
+  // Derived values based on combination selection
+  const displayPrice = selectedCombination ? selectedCombination.final_price : product?.price ?? 0;
+  const displayQuantity = selectedCombination ? selectedCombination.quantity : product?.quantity ?? 0;
+  const displayReference = selectedCombination?.reference || product?.reference;
+  const canAddToCart = hasCombinations ? (selectedCombination !== null && displayQuantity > 0) : displayQuantity > 0;
+  const needsSelection = hasCombinations && !selectedCombination;
+
+  // Initialize default combination selection
+  useEffect(() => {
+    if (product?.combinations && product?.attribute_groups) {
+      const defaultCombo = product.combinations.find((c) => c.is_default) || product.combinations[0];
+      if (defaultCombo) {
+        const defaults: Record<string, number> = {};
+        for (const [groupName, attr] of Object.entries(defaultCombo.attributes)) {
+          defaults[groupName] = attr.id;
+        }
+        setSelectedAttributes(defaults);
+      }
+    }
+  }, [product?.combinations, product?.attribute_groups]);
+
+  // Update active image when combination changes (if combo has specific images)
+  useEffect(() => {
+    if (selectedCombination && selectedCombination.image_ids.length > 0 && Object.keys(imageMap).length > 0) {
+      const comboImageUrl = imageMap[selectedCombination.image_ids[0]];
+      if (comboImageUrl) {
+        setActiveImage(comboImageUrl);
+      }
+    }
+  }, [selectedCombination, imageMap]);
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // Fetch all products and find by slug (in future, add a slug endpoint)
+        // Fetch all products list to find by slug
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/v1/products?per_page=100`
         );
@@ -37,7 +93,14 @@ export default function ProductDetailPage() {
         const found = products.find((p) => p.slug === slug) || products[0];
 
         if (found) {
-          setProduct(found);
+          // Fetch full product detail (with combinations) by ID
+          const detailRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/v1/products/${found.id}`,
+            { headers: { Accept: "application/json" } }
+          );
+          const detailJson = await detailRes.json();
+          const fullProduct = detailJson.data as ApiProduct;
+          setProduct(fullProduct);
 
           // Fetch product images
           try {
@@ -45,16 +108,23 @@ export default function ProductDetailPage() {
               `${process.env.NEXT_PUBLIC_API_URL}/v1/products/${found.id}/images`
             );
             const imgJson = await imgRes.json();
-            const images = (imgJson.data as ApiProductImage[]).map(
+            const imageData = imgJson.data as ApiProductImage[];
+            const images = imageData.map(
               (img) => img.urls?.home || img.url
             );
+            // Build id → url mapping for combination image switching
+            const idToUrl: Record<number, string> = {};
+            imageData.forEach((img) => {
+              idToUrl[img.id] = img.urls?.home || img.url;
+            });
+            setImageMap(idToUrl);
             setAllImages(images.length > 0 ? images : []);
             setActiveImage(images[0] || "");
           } catch {
             // If images fetch fails, use cover image
-            if (found.cover_image) {
-              setAllImages([found.cover_image.urls?.home || found.cover_image.url]);
-              setActiveImage(found.cover_image.urls?.home || found.cover_image.url);
+            if (fullProduct.cover_image) {
+              setAllImages([fullProduct.cover_image.urls?.home || fullProduct.cover_image.url]);
+              setActiveImage(fullProduct.cover_image.urls?.home || fullProduct.cover_image.url);
             }
           }
 
@@ -73,6 +143,11 @@ export default function ProductDetailPage() {
 
     fetchProduct();
   }, [slug]);
+
+  const handleAttributeChange = (groupName: string, attrId: number) => {
+    setSelectedAttributes((prev) => ({ ...prev, [groupName]: attrId }));
+    setQuantity(1); // Reset quantity when variant changes
+  };
 
   if (loading) {
     return (
@@ -157,22 +232,25 @@ export default function ProductDetailPage() {
             </h1>
             
             <div className="flex items-center gap-4 mb-6">
-              {product.quantity > 0 ? (
+              {displayQuantity > 0 ? (
                 <span className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
-                  ✓ In Stock ({product.quantity} available)
+                  ✓ In Stock ({displayQuantity} available)
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 text-sm font-semibold text-red-500 bg-red-50 px-3 py-1 rounded-full">
                   ✗ Out of Stock
                 </span>
               )}
-              {product.reference && (
-                <span className="text-sm text-text-muted">Ref: {product.reference}</span>
+              {displayReference && (
+                <span className="text-sm text-text-muted">Ref: {displayReference}</span>
               )}
             </div>
             
             <div className="flex items-center gap-3 mb-6">
-              <span className="text-3xl font-extrabold text-primary">{product.price.toFixed(2)} €</span>
+              <span className="text-3xl font-extrabold text-primary">{displayPrice.toFixed(2)} €</span>
+              {selectedCombination && selectedCombination.price_impact !== 0 && (
+                <span className="text-sm text-text-muted line-through">{product.price.toFixed(2)} €</span>
+              )}
             </div>
             
             {product.description_short && (
@@ -180,6 +258,18 @@ export default function ProductDetailPage() {
                 className="text-text-muted text-lg mb-8 leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: product.description_short }}
               />
+            )}
+
+            {/* Variant Selectors */}
+            {hasCombinations && product.attribute_groups && product.combinations && (
+              <div className="mb-8">
+                <VariantSelector
+                  attributeGroups={product.attribute_groups}
+                  combinations={product.combinations}
+                  selectedAttributes={selectedAttributes}
+                  onAttributeChange={handleAttributeChange}
+                />
+              </div>
             )}
             
             {/* Actions */}
@@ -193,7 +283,7 @@ export default function ProductDetailPage() {
                 </button>
                 <span className="w-8 text-center font-bold text-text-primary">{quantity}</span>
                 <button 
-                  onClick={() => setQuantity(Math.min(product.quantity, quantity + 1))}
+                  onClick={() => setQuantity(Math.min(displayQuantity, quantity + 1))}
                   className="w-12 h-full flex items-center justify-center text-text-muted hover:text-text-primary transition-colors"
                 >
                   <Plus size={18} />
@@ -202,12 +292,13 @@ export default function ProductDetailPage() {
               
               <motion.button 
                 whileTap={{ scale: 0.97 }}
-                disabled={product.quantity <= 0 || addingToCart}
+                disabled={!canAddToCart || addingToCart}
                 onClick={async () => {
                   if (addingToCart) return;
                   setAddingToCart(true);
                   try {
-                    await addItem(product.id, quantity);
+                    const attrId = selectedCombination?.id ?? 0;
+                    await addItem(product.id, quantity, attrId);
                     setAddedToCart(true);
                     setQuantity(1);
                     setTimeout(() => setAddedToCart(false), 2000);
@@ -227,6 +318,8 @@ export default function ProductDetailPage() {
                   <><Loader2 size={20} className="animate-spin" /> Adding...</>
                 ) : addedToCart ? (
                   <><Check size={20} /> Added to Cart!</>
+                ) : needsSelection ? (
+                  <>Select Options</>
                 ) : (
                   <><ShoppingBag size={20} /> Add to Cart</>
                 )}
