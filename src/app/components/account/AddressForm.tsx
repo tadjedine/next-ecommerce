@@ -88,7 +88,7 @@ export default function AddressForm({ initialData, onSave, onCancel }: AddressFo
 
           <div>
             <label className="block text-xs font-semibold text-navy mb-1.5">Address Line 2 (Optional)</label>
-            <input type="text" name="address2" value={formData.address2} onChange={handleChange} className="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+            <input type="text" name="address2" value={formData.address2 || ""} onChange={handleChange} className="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

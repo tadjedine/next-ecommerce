@@ -21,6 +21,37 @@ export interface ApiProductImage {
   legend: string | null;
 }
 
+export interface ApiCombinationAttribute {
+  id: number;
+  value: string;
+  color: string | null;
+}
+
+export interface ApiCombination {
+  id: number;
+  price_impact: number;
+  final_price: number;
+  quantity: number;
+  reference: string | null;
+  is_default: boolean;
+  attributes: Record<string, ApiCombinationAttribute>;
+  image_ids: number[];
+}
+
+export interface ApiAttributeGroupValue {
+  id: number;
+  name: string;
+  color: string | null;
+}
+
+export interface ApiAttributeGroup {
+  id: number;
+  name: string;
+  type: string;
+  is_color: boolean;
+  values: ApiAttributeGroupValue[];
+}
+
 export interface ApiProduct {
   id: number;
   name: string;
@@ -35,12 +66,15 @@ export interface ApiProduct {
   condition: string;
   category_id: number;
   date_add: string;
+  product_type?: string;
   cover_image: {
     id: number;
     url: string;
     urls: ApiImageUrls;
   } | null;
   images: ApiProductImage[];
+  combinations?: ApiCombination[];
+  attribute_groups?: ApiAttributeGroup[];
 }
 
 export interface ApiCategory {
@@ -166,6 +200,27 @@ export interface ApiOrderDetail {
   total_price: number;
 }
 
+export interface ApiFilterValue {
+  id: number;
+  name: string;
+  color?: string | null;
+  count: number;
+}
+
+export interface ApiFilterGroup {
+  id: number;
+  name: string;
+  type?: string;
+  is_color?: boolean;
+  values: ApiFilterValue[];
+}
+
+export interface ApiFiltersResponse {
+  attributes: ApiFilterGroup[];
+  features: ApiFilterGroup[];
+  price_range: { min: number; max: number };
+}
+
 // ─── API Client ──────────────────────────────────────────────
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
@@ -212,15 +267,53 @@ export async function getCategoryHierarchy(parentId?: number) {
 
 // ─── Products ────────────────────────────────────────────────
 
-export async function getProducts(params?: { category?: number; category_slug?: string; search?: string; per_page?: number }) {
+export async function getProducts(params?: { 
+  category?: number; 
+  category_slug?: string; 
+  search?: string; 
+  per_page?: number;
+  price_min?: number;
+  price_max?: number;
+  attributes?: Record<number, number[]>;
+  features?: Record<number, number[]>;
+  sort?: string;
+}) {
   const query = new URLSearchParams();
   if (params?.category) query.set("category", String(params.category));
   if (params?.category_slug) query.set("category_slug", params.category_slug);
   if (params?.search) query.set("search", params.search);
   if (params?.per_page) query.set("per_page", String(params.per_page));
+  if (params?.price_min) query.set("price_min", String(params.price_min));
+  if (params?.price_max) query.set("price_max", String(params.price_max));
+  if (params?.sort) query.set("sort", params.sort);
+
+  if (params?.attributes) {
+    Object.entries(params.attributes).forEach(([groupId, valueIds]) => {
+      if (valueIds.length > 0) {
+        query.set(`attributes[${groupId}]`, valueIds.join(","));
+      }
+    });
+  }
+
+  if (params?.features) {
+    Object.entries(params.features).forEach(([featureId, valueIds]) => {
+      if (valueIds.length > 0) {
+        query.set(`features[${featureId}]`, valueIds.join(","));
+      }
+    });
+  }
 
   const qs = query.toString();
   return apiFetch<ApiPaginatedResponse<ApiProduct>>(`/v1/products${qs ? `?${qs}` : ""}`);
+}
+
+export async function getFilters(params?: { category_slug?: string }): Promise<ApiFiltersResponse> {
+  const query = new URLSearchParams();
+  if (params?.category_slug) query.set("category_slug", params.category_slug);
+  
+  const qs = query.toString();
+  const res = await apiFetch<{ data: ApiFiltersResponse }>(`/v1/filters${qs ? `?${qs}` : ""}`);
+  return res.data;
 }
 
 export async function getProduct(id: number) {
@@ -241,10 +334,10 @@ export async function getOrCreateCart(): Promise<ApiCart> {
   return json.data;
 }
 
-export async function addCartItem(productId: number, quantity: number = 1): Promise<ApiCart> {
+export async function addCartItem(productId: number, quantity: number = 1, productAttributeId: number = 0): Promise<ApiCart> {
   const json = await authFetch<{ data: ApiCart }>(`/v1/cart/items`, {
     method: "POST",
-    body: JSON.stringify({ id_product: productId, quantity }),
+    body: JSON.stringify({ id_product: productId, id_product_attribute: productAttributeId, quantity }),
   });
   return json.data;
 }

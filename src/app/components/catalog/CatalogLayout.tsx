@@ -1,23 +1,116 @@
 "use client";
-import { useState } from "react";
-import FilterSidebar from "./FilterSidebar";
-import { FilterGroup } from "@/lib/mock/filters";
+import { useState, useMemo } from "react";
+import FilterSidebar, { FilterState } from "./FilterSidebar";
 import { motion, AnimatePresence } from "framer-motion";
 import { SlidersHorizontal, X } from "lucide-react";
 import { StaggerContainer, StaggerItem } from "../motion/Stagger";
 import ProductCard from "../ProductCard";
-import { ApiProduct } from "@/lib/api";
+import { ApiProduct, ApiFiltersResponse } from "@/lib/api";
 
 interface CatalogLayoutProps {
   title: string;
   breadcrumb: string;
   productCount: number;
-  filters: FilterGroup[];
+  apiFilters: ApiFiltersResponse;
+  filterState: FilterState;
+  onFilterChange: (state: FilterState) => void;
+  onClearFilters: () => void;
+  sort: string;
+  onSortChange: (sort: string) => void;
   products: ApiProduct[];
 }
 
-export default function CatalogLayout({ title, breadcrumb, productCount, filters, products }: CatalogLayoutProps) {
+export default function CatalogLayout({
+  title,
+  breadcrumb,
+  productCount,
+  apiFilters,
+  filterState,
+  onFilterChange,
+  onClearFilters,
+  sort,
+  onSortChange,
+  products
+}: CatalogLayoutProps) {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  // Calculate active filter count for the badge
+  const activeFilterCount = 
+    Object.values(filterState.attributes).flat().length + 
+    Object.values(filterState.features).flat().length +
+    (filterState.price_min !== undefined || filterState.price_max !== undefined ? 1 : 0);
+
+  // Generate tags for selected filters
+  const activeTags = useMemo(() => {
+    const tags: { id: string; label: string; onRemove: () => void }[] = [];
+
+    // Attributes
+    for (const [groupIdStr, valueIds] of Object.entries(filterState.attributes)) {
+      const groupId = parseInt(groupIdStr, 10);
+      const group = apiFilters.attributes.find((g) => g.id === groupId);
+      if (group) {
+        for (const valId of valueIds) {
+          const val = group.values.find((v) => v.id === valId);
+          if (val) {
+            tags.push({
+              id: `attr-${groupId}-${valId}`,
+              label: `${group.name}: ${val.name}`,
+              onRemove: () => {
+                const newValues = filterState.attributes[groupId].filter((id) => id !== valId);
+                onFilterChange((prev) => ({
+                  ...prev,
+                  attributes: { ...prev.attributes, [groupId]: newValues }
+                }));
+              }
+            });
+          }
+        }
+      }
+    }
+
+    // Features
+    for (const [featureIdStr, valueIds] of Object.entries(filterState.features)) {
+      const featureId = parseInt(featureIdStr, 10);
+      const feature = apiFilters.features.find((f) => f.id === featureId);
+      if (feature) {
+        for (const valId of valueIds) {
+          const val = feature.values.find((v) => v.id === valId);
+          if (val) {
+            tags.push({
+              id: `feat-${featureId}-${valId}`,
+              label: `${feature.name}: ${val.name}`,
+              onRemove: () => {
+                const newValues = filterState.features[featureId].filter((id) => id !== valId);
+                onFilterChange((prev) => ({
+                  ...prev,
+                  features: { ...prev.features, [featureId]: newValues }
+                }));
+              }
+            });
+          }
+        }
+      }
+    }
+
+    // Price
+    if (filterState.price_min !== undefined || filterState.price_max !== undefined) {
+      const min = filterState.price_min ?? apiFilters.price_range.min;
+      const max = filterState.price_max ?? apiFilters.price_range.max;
+      tags.push({
+        id: 'price',
+        label: `Price: $${min} - $${max}`,
+        onRemove: () => {
+          onFilterChange((prev) => ({
+            ...prev,
+            price_min: undefined,
+            price_max: undefined
+          }));
+        }
+      });
+    }
+
+    return tags;
+  }, [filterState, apiFilters, onFilterChange]);
 
   return (
     <div className="min-h-screen bg-bg-base pt-20 pb-24">
@@ -33,7 +126,12 @@ export default function CatalogLayout({ title, breadcrumb, productCount, filters
       <div className="max-w-7xl mx-auto px-6 flex">
         {/* Desktop Sidebar */}
         <div className="hidden lg:block">
-          <FilterSidebar filters={filters} />
+          <FilterSidebar 
+            apiFilters={apiFilters} 
+            filterState={filterState} 
+            onFilterChange={onFilterChange} 
+            onClearAll={onClearFilters} 
+          />
         </div>
 
         {/* Mobile Filters Drawer */}
@@ -55,7 +153,12 @@ export default function CatalogLayout({ title, breadcrumb, productCount, filters
                     <X size={20} />
                   </button>
                 </div>
-                <FilterSidebar filters={filters} />
+                <FilterSidebar 
+                  apiFilters={apiFilters} 
+                  filterState={filterState} 
+                  onFilterChange={onFilterChange} 
+                  onClearAll={onClearFilters} 
+                />
               </motion.div>
             </>
           )}
@@ -65,51 +168,68 @@ export default function CatalogLayout({ title, breadcrumb, productCount, filters
         <div className="flex-1 w-full">
           {/* Toolbar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <button 
                 onClick={() => setMobileFiltersOpen(true)}
                 className="lg:hidden flex items-center gap-2 rounded-full border border-border-soft px-4 py-2 bg-surface shadow-sm font-semibold"
               >
                 <SlidersHorizontal size={18} /> Filters
-                <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full">3</span>
+                {activeFilterCount > 0 && (
+                  <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full">{activeFilterCount}</span>
+                )}
               </button>
+              
+              {/* Active Filter Tags */}
               <div className="hidden sm:flex flex-wrap gap-2">
-                <span className="rounded-full bg-primary/10 text-primary text-xs px-3 py-1 font-semibold flex items-center gap-1 cursor-pointer">
-                  Size: M <X size={12} />
-                </span>
-                <span className="rounded-full bg-primary/10 text-primary text-xs px-3 py-1 font-semibold flex items-center gap-1 cursor-pointer">
-                  Color: Black <X size={12} />
-                </span>
+                {activeTags.map((tag) => (
+                  <span 
+                    key={tag.id}
+                    onClick={tag.onRemove}
+                    className="rounded-full bg-primary/10 text-primary text-xs px-3 py-1.5 font-bold flex items-center gap-1.5 cursor-pointer hover:bg-primary/20 transition-colors"
+                  >
+                    {tag.label} <X size={12} strokeWidth={3} />
+                  </span>
+                ))}
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-text-muted text-sm hidden sm:block">Showing 1-12 of {productCount} results</span>
-              <select className="rounded-xl border border-border-soft bg-surface px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary">
-                <option>Most Popular</option>
-                <option>Newest Arrivals</option>
-                <option>Price: Low to High</option>
-                <option>Price: High to Low</option>
+
+            <div className="flex items-center gap-4 shrink-0">
+              <span className="text-text-muted text-sm hidden sm:block">Showing {products.length} results</span>
+              <select 
+                value={sort}
+                onChange={(e) => onSortChange(e.target.value)}
+                className="rounded-xl border border-border-soft bg-surface px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+              >
+                <option value="newest">Newest Arrivals</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+                <option value="name_asc">Name: A to Z</option>
               </select>
             </div>
           </div>
 
           {/* Grid */}
-          <StaggerContainer className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {products.map(p => (
-              <StaggerItem key={p.id}>
-                <ProductCard product={p} />
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
+          {products.length === 0 ? (
+            <div className="text-center py-20 bg-surface rounded-2xl border border-border-soft">
+              <h3 className="text-2xl font-bold text-text-primary mb-2">No products found</h3>
+              <p className="text-text-muted mb-6">Try adjusting your filters or search terms.</p>
+              <button 
+                onClick={onClearFilters}
+                className="px-6 py-2 bg-primary text-white font-bold rounded-full shadow-md hover:bg-primary-dark transition-colors"
+              >
+                Clear all filters
+              </button>
+            </div>
+          ) : (
+            <StaggerContainer key={products.map(p => p.id).join('-')} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {products.map((p) => (
+                <StaggerItem key={p.id}>
+                  <ProductCard product={p} />
+                </StaggerItem>
+              ))}
+            </StaggerContainer>
+          )}
 
-          {/* Pagination */}
-          <div className="flex justify-center mt-12 gap-2">
-            <button className="border border-border-soft rounded-full w-10 h-10 flex items-center justify-center font-bold text-text-muted hover:border-primary hover:text-primary transition-colors">&lt;</button>
-            <button className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center font-bold shadow-md">1</button>
-            <button className="border border-border-soft rounded-full w-10 h-10 flex items-center justify-center font-bold text-text-muted hover:border-primary hover:text-primary transition-colors">2</button>
-            <button className="border border-border-soft rounded-full w-10 h-10 flex items-center justify-center font-bold text-text-muted hover:border-primary hover:text-primary transition-colors">3</button>
-            <button className="border border-border-soft rounded-full w-10 h-10 flex items-center justify-center font-bold text-text-muted hover:border-primary hover:text-primary transition-colors">&gt;</button>
-          </div>
         </div>
       </div>
     </div>
