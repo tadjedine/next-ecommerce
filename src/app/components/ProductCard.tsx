@@ -1,10 +1,10 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ApiProduct } from "@/lib/api";
 import { HoverLift } from "./motion/HoverLift";
-import { Heart, ImageOff, Check, Loader2 } from "lucide-react";
+import { Heart, ImageOff, Check, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
 
 export default function ProductCard({ product }: { product: ApiProduct }) {
@@ -12,13 +12,77 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
 
-  // Get the cover image URL, falling back through available sources
-  const imageUrl =
-    product.cover_image?.urls?.home ||
-    product.cover_image?.url ||
-    (product.images && product.images.length > 0 ? product.images[0]?.urls?.home || product.images[0]?.url : null);
+  // Carousel/Slider state
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isSwiping, setIsSwiping] = useState(false);
 
-  const hasImage = !!imageUrl;
+  const minSwipeDistance = 50;
+
+  // Collect all unique image URLs for the slider
+  const images = useMemo(() => {
+    if (!product.images || product.images.length === 0) {
+      const coverUrl = product.cover_image?.urls?.home || product.cover_image?.url;
+      return coverUrl ? [coverUrl] : [];
+    }
+    // Sort to place cover image first, then by position
+    const coverId = product.cover_image?.id;
+    const sortedImages = [...product.images].sort((a, b) => {
+      if (a.id === coverId) return -1;
+      if (b.id === coverId) return 1;
+      return a.position - b.position;
+    });
+    return sortedImages.map((img) => img.urls?.home || img.url);
+  }, [product.images, product.cover_image]);
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (images.length <= 1) return;
+    setCurrentIdx((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (images.length <= 1) return;
+    setCurrentIdx((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+    setIsSwiping(false);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    const currentClientX = e.targetTouches[0].clientX;
+    if (Math.abs(touchStart - currentClientX) > 10) {
+      setIsSwiping(true);
+    }
+    setTouchEnd(currentClientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    if (isLeftSwipe) {
+      setCurrentIdx((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    } else if (isRightSwipe) {
+      setCurrentIdx((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
+  const handleLinkClick = (e: React.MouseEvent) => {
+    if (isSwiping) {
+      e.preventDefault();
+    }
+  };
 
   const handleAddToCart = async () => {
     if (adding || product.quantity <= 0) return;
@@ -49,15 +113,68 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
       </button>
 
       {/* Image */}
-      <Link href={`/products/${product.slug}`} className="relative aspect-[4/5] w-full overflow-hidden bg-bg-base rounded-xl">
-        {hasImage ? (
-          <Image
-            src={imageUrl}
-            alt={product.name}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-          />
+      <Link 
+        href={`/products/${product.slug}`} 
+        onClick={handleLinkClick}
+        className="relative aspect-[4/5] w-full overflow-hidden bg-bg-base rounded-xl group/image"
+      >
+        {images.length > 0 ? (
+          <>
+            <div 
+              className="w-full h-full relative"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              <Image
+                src={images[currentIdx]}
+                alt={product.name}
+                fill
+                className="object-cover transition-transform duration-500 group-hover/image:scale-105"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                priority={currentIdx === 0}
+              />
+            </div>
+
+            {/* Arrows */}
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={handlePrev}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/30 dark:bg-black/30 backdrop-blur-md rounded-full text-text-primary border border-border-soft hover:bg-primary hover:text-white transition-all shadow-sm opacity-0 group-hover/image:opacity-100 z-10"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/30 dark:bg-black/30 backdrop-blur-md rounded-full text-text-primary border border-border-soft hover:bg-primary hover:text-white transition-all shadow-sm opacity-0 group-hover/image:opacity-100 z-10"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </>
+            )}
+
+            {/* Dots */}
+            {images.length > 1 && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                {images.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setCurrentIdx(idx);
+                    }}
+                    className={`w-1.5 h-1.5 rounded-full transition-all ${
+                      currentIdx === idx 
+                        ? "bg-primary w-3" 
+                        : "bg-white/60 dark:bg-black/40 hover:bg-white/95"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-text-muted">
             <ImageOff size={32} className="mb-2 opacity-40" />

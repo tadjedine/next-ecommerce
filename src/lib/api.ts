@@ -342,18 +342,18 @@ export async function addCartItem(productId: number, quantity: number = 1, produ
   return json.data;
 }
 
-export async function updateCartItem(productId: number, quantity: number): Promise<ApiCart> {
+export async function updateCartItem(productId: number, quantity: number, productAttributeId: number = 0): Promise<ApiCart> {
   const json = await authFetch<{ data: ApiCart }>(`/v1/cart/items/${productId}`, {
     method: "PUT",
-    body: JSON.stringify({ quantity }),
+    body: JSON.stringify({ quantity, id_product_attribute: productAttributeId }),
   });
   return json.data;
 }
 
-export async function removeCartItem(productId: number): Promise<ApiCart> {
+export async function removeCartItem(productId: number, productAttributeId: number = 0): Promise<ApiCart> {
   const json = await authFetch<{ data: ApiCart }>(`/v1/cart/items/${productId}`, {
     method: "DELETE",
-    body: JSON.stringify({ quantity: 0 }),
+    body: JSON.stringify({ quantity: 0, id_product_attribute: productAttributeId }),
   });
   return json.data;
 }

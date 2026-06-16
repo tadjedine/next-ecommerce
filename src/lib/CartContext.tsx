@@ -17,8 +17,8 @@ interface CartContextValue {
   subtotal: number;
   loading: boolean;
   addItem: (productId: number, quantity?: number, productAttributeId?: number) => Promise<void>;
-  updateItem: (productId: number, quantity: number) => Promise<void>;
-  removeItem: (productId: number) => Promise<void>;
+  updateItem: (productId: number, quantity: number, productAttributeId?: number) => Promise<void>;
+  removeItem: (productId: number, productAttributeId?: number) => Promise<void>;
   refreshCart: () => Promise<void>;
 }
 
@@ -63,10 +63,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated]);
 
-  const updateItem = useCallback(async (productId: number, quantity: number) => {
+  const updateItem = useCallback(async (productId: number, quantity: number, productAttributeId: number = 0) => {
     if (!isAuthenticated) throw new Error("Must be logged in to update cart");
     try {
-      const data = await apiUpdateItem(productId, quantity);
+      const data = await apiUpdateItem(productId, quantity, productAttributeId);
       setCart(data);
     } catch (err) {
       console.error("Failed to update cart item:", err);
@@ -74,10 +74,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated]);
 
-  const removeItem = useCallback(async (productId: number) => {
+  const removeItem = useCallback(async (productId: number, productAttributeId: number = 0) => {
     if (!isAuthenticated) throw new Error("Must be logged in to remove cart item");
     try {
-      const data = await apiRemoveItem(productId);
+      const data = await apiRemoveItem(productId, productAttributeId);
       setCart(data);
     } catch (err) {
       console.error("Failed to remove cart item:", err);

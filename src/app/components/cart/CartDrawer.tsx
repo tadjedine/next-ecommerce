@@ -14,14 +14,15 @@ interface CartDrawerProps {
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, totalQuantity, subtotal, updateItem, removeItem, loading } = useCart();
   const { isAuthenticated } = useAuth();
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const handleUpdateQty = async (productId: number, currentQty: number, delta: number) => {
+  const handleUpdateQty = async (productId: number, productAttributeId: number, currentQty: number, delta: number) => {
     const newQty = currentQty + delta;
     if (newQty < 1) return;
-    setUpdatingId(productId);
+    const compositeId = `${productId}-${productAttributeId}`;
+    setUpdatingId(compositeId);
     try {
-      await updateItem(productId, newQty);
+      await updateItem(productId, newQty, productAttributeId);
     } catch (err) {
       console.error("Failed to update quantity:", err);
     } finally {
@@ -29,10 +30,11 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     }
   };
 
-  const handleRemove = async (productId: number) => {
-    setUpdatingId(productId);
+  const handleRemove = async (productId: number, productAttributeId: number) => {
+    const compositeId = `${productId}-${productAttributeId}`;
+    setUpdatingId(compositeId);
     try {
-      await removeItem(productId);
+      await removeItem(productId, productAttributeId);
     } catch (err) {
       console.error("Failed to remove item:", err);
     } finally {
@@ -95,62 +97,65 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 </div>
               ) : (
                 <AnimatePresence>
-                  {items.map((item) => (
-                    <motion.div 
-                      key={item.product_id}
-                      layout
-                      initial={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 100 }}
-                      className={`flex gap-4 ${updatingId === item.product_id ? "opacity-60" : ""}`}
-                    >
-                      <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-border-soft bg-bg-base">
-                        <div className="w-full h-full flex items-center justify-center text-text-muted">
-                          <ShoppingBag size={20} />
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-col flex-1">
-                        <div className="flex justify-between items-start mb-1">
-                          <h4 className="font-semibold text-text-primary line-clamp-1">{item.name || `Product #${item.product_id}`}</h4>
-                          <button 
-                            onClick={() => handleRemove(item.product_id)}
-                            className="text-text-muted hover:text-red-500 transition-colors p-1"
-                            disabled={updatingId === item.product_id}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                        
-                        {item.reference && (
-                          <div className="text-xs text-text-muted mb-2">
-                            Ref: {item.reference}
+                  {items.map((item) => {
+                    const itemCompositeId = `${item.product_id}-${item.product_attribute_id}`;
+                    return (
+                      <motion.div 
+                        key={itemCompositeId}
+                        layout
+                        initial={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 100 }}
+                        className={`flex gap-4 ${updatingId === itemCompositeId ? "opacity-60" : ""}`}
+                      >
+                        <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-border-soft bg-bg-base">
+                          <div className="w-full h-full flex items-center justify-center text-text-muted">
+                            <ShoppingBag size={20} />
                           </div>
-                        )}
+                        </div>
                         
-                        <div className="flex items-center justify-between mt-auto">
-                          <div className="font-bold text-primary">{item.line_subtotal.toFixed(2)} €</div>
+                        <div className="flex flex-col flex-1">
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className="font-semibold text-text-primary line-clamp-1">{item.name || `Product #${item.product_id}`}</h4>
+                            <button 
+                              onClick={() => handleRemove(item.product_id, item.product_attribute_id)}
+                              className="text-text-muted hover:text-red-500 transition-colors p-1"
+                              disabled={updatingId === itemCompositeId}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                           
-                          <div className="flex items-center gap-3">
-                            <button 
-                              onClick={() => handleUpdateQty(item.product_id, item.quantity, -1)}
-                              disabled={item.quantity <= 1 || updatingId === item.product_id}
-                              className="w-7 h-7 rounded-full border border-border-soft flex items-center justify-center text-text-primary hover:bg-bg-base transition-colors disabled:opacity-40"
-                            >
-                              <Minus size={14} />
-                            </button>
-                            <span className="text-sm font-semibold w-4 text-center">{item.quantity}</span>
-                            <button 
-                              onClick={() => handleUpdateQty(item.product_id, item.quantity, 1)}
-                              disabled={updatingId === item.product_id}
-                              className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white hover:bg-primary-dark transition-colors shadow-sm disabled:opacity-40"
-                            >
-                              <Plus size={14} />
-                            </button>
+                          {item.reference && (
+                            <div className="text-xs text-text-muted mb-2">
+                              Ref: {item.reference}
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center justify-between mt-auto">
+                            <div className="font-bold text-primary">{item.line_subtotal.toFixed(2)} €</div>
+                            
+                            <div className="flex items-center gap-3">
+                              <button 
+                                onClick={() => handleUpdateQty(item.product_id, item.product_attribute_id, item.quantity, -1)}
+                                disabled={item.quantity <= 1 || updatingId === itemCompositeId}
+                                className="w-7 h-7 rounded-full border border-border-soft flex items-center justify-center text-text-primary hover:bg-bg-base transition-colors disabled:opacity-40"
+                              >
+                                <Minus size={14} />
+                              </button>
+                              <span className="text-sm font-semibold w-4 text-center">{item.quantity}</span>
+                              <button 
+                                onClick={() => handleUpdateQty(item.product_id, item.product_attribute_id, item.quantity, 1)}
+                                disabled={updatingId === itemCompositeId}
+                                className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white hover:bg-primary-dark transition-colors shadow-sm disabled:opacity-40"
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    );
+                  })}
                 </AnimatePresence>
               )}
             </div>

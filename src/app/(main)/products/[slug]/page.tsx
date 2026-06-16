@@ -16,7 +16,7 @@ export default function ProductDetailPage() {
   const slug = params.slug as string;
 
   const [product, setProduct] = useState<ApiProduct | null>(null);
-  const [allImages, setAllImages] = useState<string[]>([]);
+  const [allImages, setAllImages] = useState<{ original: string; medium: string }[]>([]);
   const [imageMap, setImageMap] = useState<Record<number, string>>({}); // id_image → url
   const [related, setRelated] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,22 +109,25 @@ export default function ProductDetailPage() {
             );
             const imgJson = await imgRes.json();
             const imageData = imgJson.data as ApiProductImage[];
-            const images = imageData.map(
-              (img) => img.urls?.home || img.url
-            );
+            const images = imageData.map((img) => ({
+              original: img.urls?.original || img.url,
+              medium: img.urls?.medium || img.url,
+            }));
             // Build id → url mapping for combination image switching
             const idToUrl: Record<number, string> = {};
             imageData.forEach((img) => {
-              idToUrl[img.id] = img.urls?.home || img.url;
+              idToUrl[img.id] = img.urls?.original || img.url;
             });
             setImageMap(idToUrl);
-            setAllImages(images.length > 0 ? images : []);
-            setActiveImage(images[0] || "");
+            setAllImages(images);
+            setActiveImage(images[0]?.original || "");
           } catch {
             // If images fetch fails, use cover image
             if (fullProduct.cover_image) {
-              setAllImages([fullProduct.cover_image.urls?.home || fullProduct.cover_image.url]);
-              setActiveImage(fullProduct.cover_image.urls?.home || fullProduct.cover_image.url);
+              const orig = fullProduct.cover_image.urls?.original || fullProduct.cover_image.url;
+              const med = fullProduct.cover_image.urls?.medium || fullProduct.cover_image.url;
+              setAllImages([{ original: orig, medium: med }]);
+              setActiveImage(orig);
             }
           }
 
@@ -177,7 +180,7 @@ export default function ProductDetailPage() {
           
           {/* Left: Gallery */}
           <div className="w-full lg:w-1/2 flex flex-col gap-4">
-            <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-bg-base border border-border-soft">
+            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-bg-base border border-border-soft">
               {product.on_sale && (
                 <div className="absolute top-4 left-4 z-10 bg-accent text-white px-3 py-1 text-sm font-bold rounded-full uppercase tracking-wider shadow-md">
                   Sale
@@ -193,7 +196,7 @@ export default function ProductDetailPage() {
                   className="absolute inset-0"
                 >
                   {activeImage ? (
-                    <Image src={activeImage} alt={product.name} fill className="object-cover" />
+                    <Image src={activeImage} alt={product.name} fill className="object-contain" />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-text-muted">
                       <ImageOff size={48} className="mb-2 opacity-40" />
@@ -209,12 +212,12 @@ export default function ProductDetailPage() {
                 {allImages.map((img, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setActiveImage(img)}
+                    onClick={() => setActiveImage(img.original)}
                     className={`relative w-20 h-24 shrink-0 rounded-xl overflow-hidden border-2 transition-all ${
-                      activeImage === img ? "border-primary opacity-100" : "border-transparent opacity-60 hover:opacity-100"
+                      activeImage === img.original ? "border-primary opacity-100" : "border-transparent opacity-60 hover:opacity-100"
                     }`}
                   >
-                    <Image src={img} alt={`Thumbnail ${idx}`} fill className="object-cover" />
+                    <Image src={img.medium} alt={`Thumbnail ${idx}`} fill className="object-cover" />
                   </button>
                 ))}
               </div>
