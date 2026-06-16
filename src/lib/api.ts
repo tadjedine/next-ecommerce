@@ -115,6 +115,7 @@ export interface ApiCartItem {
   name: string | null;
   reference: string | null;
   image: number | null;
+  image_url: string | null;
 }
 
 export interface ApiCart {
@@ -221,11 +222,52 @@ export interface ApiFiltersResponse {
   price_range: { min: number; max: number };
 }
 
+// ─── Client Cache ─────────────────────────────────────────────
+
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+
+const clientCache = new Map<string, CacheEntry<any>>();
+
+function getCachedData<T>(key: string): T | null {
+  const entry = clientCache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    clientCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCachedData<T>(key: string, data: T, ttlMs: number): void {
+  clientCache.set(key, {
+    data,
+    expiresAt: Date.now() + ttlMs,
+  });
+}
+
+interface ApiFetchOptions extends RequestInit {
+  cacheTtl?: number;
+}
+
 // ─── API Client ──────────────────────────────────────────────
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
-async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+async function apiFetch<T>(endpoint: string, options?: ApiFetchOptions): Promise<T> {
+  const cacheKey = `${options?.method || "GET"}:${endpoint}`;
+  
+  if (!options?.method || options.method === "GET") {
+    if (options?.cacheTtl) {
+      const cached = getCachedData<T>(cacheKey);
+      if (cached !== null) {
+        return cached;
+      }
+    }
+  }
+
   const url = `${API_BASE}${endpoint}`;
   const res = await fetch(url, {
     headers: {
@@ -233,16 +275,23 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
       "Content-Type": "application/json",
       ...options?.headers,
     },
+    cache: "no-store",
     ...options,
-    // Revalidate every 60 seconds for ISR-friendly caching
-    next: { revalidate: 60 },
   });
 
   if (!res.ok) {
     throw new Error(`API Error: ${res.status} ${res.statusText} — ${url}`);
   }
 
-  return res.json();
+  const data = await res.json();
+
+  if (!options?.method || options.method === "GET") {
+    if (options?.cacheTtl) {
+      setCachedData(cacheKey, data, options.cacheTtl);
+    }
+  }
+
+  return data;
 }
 
 // ─── Categories ──────────────────────────────────────────────
@@ -253,16 +302,16 @@ export async function getCategories(params?: { per_page?: number; search?: strin
   if (params?.search) query.set("search", params.search);
 
   const qs = query.toString();
-  return apiFetch<ApiPaginatedResponse<ApiCategory>>(`/v1/categories${qs ? `?${qs}` : ""}`);
+  return apiFetch<ApiPaginatedResponse<ApiCategory>>(`/v1/categories${qs ? `?${qs}` : ""}`, { cacheTtl: 300000 });
 }
 
 export async function getCategory(id: number) {
-  return apiFetch<{ data: ApiCategory }>(`/v1/categories/${id}`);
+  return apiFetch<{ data: ApiCategory }>(`/v1/categories/${id}`, { cacheTtl: 300000 });
 }
 
 export async function getCategoryHierarchy(parentId?: number) {
   const qs = parentId ? `?parent_id=${parentId}` : "";
-  return apiFetch<ApiCategory[]>(`/v1/categories/hierarchy${qs}`);
+  return apiFetch<ApiCategory[]>(`/v1/categories/hierarchy${qs}`, { cacheTtl: 300000 });
 }
 
 // ─── Products ────────────────────────────────────────────────
@@ -304,7 +353,7 @@ export async function getProducts(params?: {
   }
 
   const qs = query.toString();
-  return apiFetch<ApiPaginatedResponse<ApiProduct>>(`/v1/products${qs ? `?${qs}` : ""}`);
+  return apiFetch<ApiPaginatedResponse<ApiProduct>>(`/v1/products${qs ? `?${qs}` : ""}`, { cacheTtl: 120000 });
 }
 
 export async function getFilters(params?: { category_slug?: string }): Promise<ApiFiltersResponse> {
@@ -312,16 +361,16 @@ export async function getFilters(params?: { category_slug?: string }): Promise<A
   if (params?.category_slug) query.set("category_slug", params.category_slug);
   
   const qs = query.toString();
-  const res = await apiFetch<{ data: ApiFiltersResponse }>(`/v1/filters${qs ? `?${qs}` : ""}`);
+  const res = await apiFetch<{ data: ApiFiltersResponse }>(`/v1/filters${qs ? `?${qs}` : ""}`, { cacheTtl: 300000 });
   return res.data;
 }
 
 export async function getProduct(id: number) {
-  return apiFetch<{ data: ApiProduct }>(`/v1/products/${id}`);
+  return apiFetch<{ data: ApiProduct }>(`/v1/products/${id}`, { cacheTtl: 120000 });
 }
 
 export async function getProductImages(productId: number) {
-  return apiFetch<{ data: ApiProductImage[] }>(`/v1/products/${productId}/images`);
+  return apiFetch<{ data: ApiProductImage[] }>(`/v1/products/${productId}/images`, { cacheTtl: 300000 });
 }
 
 // ─── Cart (Auth Required) ────────────────────────────────────
@@ -427,11 +476,11 @@ export async function getOrder(id: number): Promise<ApiOrder> {
 // ─── Public Lists ────────────────────────────────────────────
 
 export async function getCarriers(): Promise<ApiCarrier[]> {
-  const res = await apiFetch<{ data: ApiCarrier[] }>("/v1/carriers");
+  const res = await apiFetch<{ data: ApiCarrier[] }>("/v1/carriers", { cacheTtl: 600000 });
   return res.data;
 }
 
 export async function getCountries(): Promise<ApiCountry[]> {
-  const res = await apiFetch<{ data: ApiCountry[] }>("/v1/countries");
+  const res = await apiFetch<{ data: ApiCountry[] }>("/v1/countries", { cacheTtl: 600000 });
   return res.data;
 }

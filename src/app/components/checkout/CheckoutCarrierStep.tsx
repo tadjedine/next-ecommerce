@@ -1,5 +1,7 @@
 "use client";
+import { useEffect, useState } from "react";
 import CarrierSelector from "@/app/components/account/CarrierSelector";
+import { getCarriers, ApiCarrier } from "@/lib/api";
 
 interface CheckoutCarrierStepProps {
   selectedId: number | null;
@@ -10,9 +12,30 @@ interface CheckoutCarrierStepProps {
 }
 
 export default function CheckoutCarrierStep({ selectedId, onSelect, onNext, onBack, loading }: CheckoutCarrierStepProps) {
+  const [carriers, setCarriers] = useState<ApiCarrier[]>([]);
+  const [carriersLoading, setCarriersLoading] = useState(true);
+
+  useEffect(() => {
+    getCarriers()
+      .then((data) => {
+        setCarriers(data);
+      })
+      .catch((err) => {
+        console.error("Error fetching carriers:", err);
+      })
+      .finally(() => {
+        setCarriersLoading(false);
+      });
+  }, []);
+
   return (
     <div className="space-y-6">
-      <CarrierSelector selectedId={selectedId} onSelect={onSelect} />
+      <CarrierSelector 
+        carriers={carriers} 
+        loading={carriersLoading || loading} 
+        selectedId={selectedId} 
+        onSelect={onSelect} 
+      />
       
       <div className="flex justify-between items-center pt-4 border-t border-slate-100">
         <button onClick={onBack} className="text-slate-500 font-semibold text-sm hover:text-navy transition-colors">

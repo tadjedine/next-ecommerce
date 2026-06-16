@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Minus, Plus, Trash2, ShoppingBag, Loader2 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { useCart } from "@/lib/CartContext";
 import { useAuth } from "@/lib/AuthContext";
@@ -108,9 +109,19 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                         className={`flex gap-4 ${updatingId === itemCompositeId ? "opacity-60" : ""}`}
                       >
                         <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-border-soft bg-bg-base">
-                          <div className="w-full h-full flex items-center justify-center text-text-muted">
-                            <ShoppingBag size={20} />
-                          </div>
+                          {item.image_url ? (
+                            <Image
+                              src={item.image_url}
+                              alt={item.name || `Product #${item.product_id}`}
+                              fill
+                              className="object-contain"
+                              sizes="80px"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-text-muted">
+                              <ShoppingBag size={20} />
+                            </div>
+                          )}
                         </div>
                         
                         <div className="flex flex-col flex-1">

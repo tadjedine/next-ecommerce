@@ -10,7 +10,7 @@ interface CarrierSelectorProps {
 }
 
 export default function CarrierSelector({ carriers, loading, selectedId, onSelect }: CarrierSelectorProps) {
-  if (loading) return <div className="animate-pulse h-24 bg-slate-100 rounded-xl w-full"></div>;
+  if (loading || !carriers) return <div className="animate-pulse h-24 bg-slate-100 rounded-xl w-full"></div>;
   if (carriers.length === 0) return <div className="text-sm text-slate-500">No carriers available.</div>;
 
   return (

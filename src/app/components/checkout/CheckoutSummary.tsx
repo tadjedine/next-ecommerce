@@ -1,6 +1,7 @@
 "use client";
 import { ApiCheckoutSummary, ApiCartItem } from "@/lib/api";
 import { ShoppingBag } from "lucide-react";
+import Image from "next/image";
 
 interface CheckoutSummaryProps {
   summary: ApiCheckoutSummary | null;
@@ -14,9 +15,19 @@ export default function CheckoutSummary({ summary, items }: CheckoutSummaryProps
 
       <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2">
         {items.map(item => (
-          <div key={item.product_id} className="flex gap-4">
-            <div className="w-16 h-16 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
-              <ShoppingBag size={20} className="text-slate-300" />
+          <div key={`${item.product_id}-${item.product_attribute_id}`} className="flex gap-4">
+            <div className="w-16 h-16 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 overflow-hidden relative">
+              {item.image_url ? (
+                <Image
+                  src={item.image_url}
+                  alt={item.name || `Product #${item.product_id}`}
+                  fill
+                  className="object-contain"
+                  sizes="64px"
+                />
+              ) : (
+                <ShoppingBag size={20} className="text-slate-300" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <h4 className="font-semibold text-sm text-navy line-clamp-2 leading-tight mb-1">{item.name || `Product #${item.product_id}`}</h4>
