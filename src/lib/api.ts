@@ -1,7 +1,7 @@
 // ─── API Types ───────────────────────────────────────────────
 // These types mirror the JSON shapes returned by the Laravel API.
 
-import { authFetch } from "./auth";
+import { authFetch, getAuthToken } from "./auth";
 
 export interface ApiImageUrls {
   original: string;
@@ -275,6 +275,7 @@ async function apiFetch<T>(endpoint: string, options?: ApiFetchOptions): Promise
       "Content-Type": "application/json",
       ...options?.headers,
     },
+    credentials: "include",
     cache: "no-store",
     ...options,
   });
@@ -373,10 +374,20 @@ export async function getProductImages(productId: number) {
   return apiFetch<{ data: ApiProductImage[] }>(`/v1/products/${productId}/images`, { cacheTtl: 300000 });
 }
 
-// ─── Cart (Auth Required) ────────────────────────────────────
+// ─── Cart (Auth + Guest) ─────────────────────────────────────
+// cartFetch picks authFetch (with Bearer token) when logged in,
+// or apiFetch (cookie-only) when browsing as a guest.
+
+async function cartFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const token = getAuthToken();
+  if (token) {
+    return authFetch<T>(endpoint, options);
+  }
+  return apiFetch<T>(endpoint, options);
+}
 
 export async function getOrCreateCart(): Promise<ApiCart> {
-  const json = await authFetch<{ data: ApiCart }>(`/v1/cart`, {
+  const json = await cartFetch<{ data: ApiCart }>(`/v1/cart`, {
     method: "POST",
     body: JSON.stringify({}),
   });
@@ -384,7 +395,7 @@ export async function getOrCreateCart(): Promise<ApiCart> {
 }
 
 export async function addCartItem(productId: number, quantity: number = 1, productAttributeId: number = 0): Promise<ApiCart> {
-  const json = await authFetch<{ data: ApiCart }>(`/v1/cart/items`, {
+  const json = await cartFetch<{ data: ApiCart }>(`/v1/cart/items`, {
     method: "POST",
     body: JSON.stringify({ id_product: productId, id_product_attribute: productAttributeId, quantity }),
   });
@@ -392,7 +403,7 @@ export async function addCartItem(productId: number, quantity: number = 1, produ
 }
 
 export async function updateCartItem(productId: number, quantity: number, productAttributeId: number = 0): Promise<ApiCart> {
-  const json = await authFetch<{ data: ApiCart }>(`/v1/cart/items/${productId}`, {
+  const json = await cartFetch<{ data: ApiCart }>(`/v1/cart/items/${productId}`, {
     method: "PUT",
     body: JSON.stringify({ quantity, id_product_attribute: productAttributeId }),
   });
@@ -400,9 +411,8 @@ export async function updateCartItem(productId: number, quantity: number, produc
 }
 
 export async function removeCartItem(productId: number, productAttributeId: number = 0): Promise<ApiCart> {
-  const json = await authFetch<{ data: ApiCart }>(`/v1/cart/items/${productId}`, {
+  const json = await cartFetch<{ data: ApiCart }>(`/v1/cart/items/${productId}?id_product_attribute=${productAttributeId}`, {
     method: "DELETE",
-    body: JSON.stringify({ quantity: 0, id_product_attribute: productAttributeId }),
   });
   return json.data;
 }
@@ -458,6 +468,29 @@ export async function confirmCheckout(paymentMethod: string): Promise<any> {
   return authFetch("/v1/checkout/confirm", {
     method: "POST",
     body: JSON.stringify({ payment_method: paymentMethod }),
+  });
+}
+
+// ─── Guest Checkout ──────────────────────────────────────────
+
+export interface GuestCheckoutData {
+  email: string;
+  firstname: string;
+  lastname: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  postcode?: string;
+  id_country: number;
+  phone?: string;
+  id_carrier: number;
+  payment_method: string;
+}
+
+export async function guestCheckout(data: GuestCheckoutData): Promise<any> {
+  return apiFetch("/v1/checkout/guest-confirm", {
+    method: "POST",
+    body: JSON.stringify(data),
   });
 }
 
