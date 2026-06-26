@@ -9,6 +9,9 @@ interface CheckoutSummaryProps {
 }
 
 export default function CheckoutSummary({ summary, items }: CheckoutSummaryProps) {
+  const calculatedSubtotal = summary?.subtotal ?? items.reduce((acc, item) => acc + item.line_subtotal, 0);
+  const calculatedTotal = summary?.total ?? calculatedSubtotal;
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sticky top-24">
       <h3 className="text-xl font-bold text-navy mb-6">Order Summary</h3>
@@ -41,7 +44,7 @@ export default function CheckoutSummary({ summary, items }: CheckoutSummaryProps
       <div className="border-t border-slate-100 pt-4 space-y-3">
         <div className="flex justify-between text-sm">
           <span className="text-slate-500">Subtotal</span>
-          <span className="font-semibold text-navy">{summary?.subtotal.toFixed(2) || "0.00"} €</span>
+          <span className="font-semibold text-navy">{calculatedSubtotal.toFixed(2)} €</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-slate-500">Shipping</span>
@@ -65,7 +68,7 @@ export default function CheckoutSummary({ summary, items }: CheckoutSummaryProps
 
       <div className="border-t border-slate-100 mt-4 pt-4 flex justify-between items-end">
         <span className="font-bold text-navy text-lg">Total</span>
-        <span className="font-extrabold text-2xl text-primary">{summary?.total.toFixed(2) || "0.00"} €</span>
+        <span className="font-extrabold text-2xl text-primary">{calculatedTotal.toFixed(2)} €</span>
       </div>
       
       {summary?.validation_errors && summary.validation_errors.length > 0 && (

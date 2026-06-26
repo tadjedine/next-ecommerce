@@ -82,12 +82,13 @@ export default function CheckoutPage() {
         router.push("/cart");
       } else {
         setMode("choosing");
-        // Pre-fetch countries and carriers for guest checkout
-        Promise.all([getCountries(), getCarriers()])
-          .then(([c, car]) => {
+        // Pre-fetch countries, carriers, and summary for guest checkout
+        Promise.all([getCountries(), getCarriers(), getCheckoutSummary()])
+          .then(([c, car, sum]) => {
             setCountries(c);
             setCarriers(car);
             if (c.length > 0) setGuestCountry(c[0].id);
+            setSummary(sum);
           })
           .catch(console.error)
           .finally(() => {

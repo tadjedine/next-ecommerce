@@ -281,7 +281,16 @@ async function apiFetch<T>(endpoint: string, options?: ApiFetchOptions): Promise
   });
 
   if (!res.ok) {
-    throw new Error(`API Error: ${res.status} ${res.statusText} — ${url}`);
+    let errorMessage = `API Error: ${res.status} ${res.statusText}`;
+    try {
+      const errJson = await res.json();
+      if (errJson.message) {
+        errorMessage = errJson.message;
+      }
+    } catch (e) {
+      // Ignored if response is not JSON
+    }
+    throw new Error(errorMessage);
   }
 
   const data = await res.json();
@@ -447,7 +456,8 @@ export async function deleteAddress(id: number): Promise<void> {
 // ─── Checkout (Auth Required) ────────────────────────────────
 
 export async function getCheckoutSummary(): Promise<ApiCheckoutSummary> {
-  return authFetch<ApiCheckoutSummary>("/v1/checkout/summary");
+  const res = await cartFetch<{ data: ApiCheckoutSummary }>("/v1/checkout/summary");
+  return res.data;
 }
 
 export async function setCheckoutAddresses(deliveryId: number, invoiceId?: number): Promise<any> {
