@@ -64,7 +64,7 @@ export async function authFetch<T>(endpoint: string, options?: RequestInit): Pro
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const url = `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"}${endpoint}`;
+  const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}${endpoint}`;
   const res = await fetch(url, {
     ...options,
     credentials: "include",

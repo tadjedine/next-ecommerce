@@ -254,7 +254,7 @@ interface ApiFetchOptions extends RequestInit {
 
 // ─── API Client ──────────────────────────────────────────────
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 async function apiFetch<T>(endpoint: string, options?: ApiFetchOptions): Promise<T> {
   const cacheKey = `${options?.method || "GET"}:${endpoint}`;

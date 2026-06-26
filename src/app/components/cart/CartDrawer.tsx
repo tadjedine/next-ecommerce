@@ -179,7 +179,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 </div>
                 
                 <div className="flex flex-col gap-3">
-                  <Link href={isAuthenticated ? "/checkout" : "/auth"} onClick={onClose} className="w-full py-4 bg-primary text-white rounded-full font-bold shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors text-center block">
+                  <Link href="/checkout" onClick={onClose} className="w-full py-4 bg-primary text-white rounded-full font-bold shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors text-center block">
                     Checkout
                   </Link>
                   <button 
