@@ -1,7 +1,7 @@
 // ─── API Types ───────────────────────────────────────────────
 // These types mirror the JSON shapes returned by the Laravel API.
 
-import { authFetch } from "./auth";
+import { authFetch, getAuthToken } from "./auth";
 
 export interface ApiImageUrls {
   original: string;
@@ -254,7 +254,7 @@ interface ApiFetchOptions extends RequestInit {
 
 // ─── API Client ──────────────────────────────────────────────
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 async function apiFetch<T>(endpoint: string, options?: ApiFetchOptions): Promise<T> {
   const cacheKey = `${options?.method || "GET"}:${endpoint}`;
@@ -275,12 +275,22 @@ async function apiFetch<T>(endpoint: string, options?: ApiFetchOptions): Promise
       "Content-Type": "application/json",
       ...options?.headers,
     },
+    credentials: "include",
     cache: "no-store",
     ...options,
   });
 
   if (!res.ok) {
-    throw new Error(`API Error: ${res.status} ${res.statusText} — ${url}`);
+    let errorMessage = `API Error: ${res.status} ${res.statusText}`;
+    try {
+      const errJson = await res.json();
+      if (errJson.message) {
+        errorMessage = errJson.message;
+      }
+    } catch (e) {
+      // Ignored if response is not JSON
+    }
+    throw new Error(errorMessage);
   }
 
   const data = await res.json();
@@ -373,10 +383,20 @@ export async function getProductImages(productId: number) {
   return apiFetch<{ data: ApiProductImage[] }>(`/v1/products/${productId}/images`, { cacheTtl: 300000 });
 }
 
-// ─── Cart (Auth Required) ────────────────────────────────────
+// ─── Cart (Auth + Guest) ─────────────────────────────────────
+// cartFetch picks authFetch (with Bearer token) when logged in,
+// or apiFetch (cookie-only) when browsing as a guest.
+
+async function cartFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const token = getAuthToken();
+  if (token) {
+    return authFetch<T>(endpoint, options);
+  }
+  return apiFetch<T>(endpoint, options);
+}
 
 export async function getOrCreateCart(): Promise<ApiCart> {
-  const json = await authFetch<{ data: ApiCart }>(`/v1/cart`, {
+  const json = await cartFetch<{ data: ApiCart }>(`/v1/cart`, {
     method: "POST",
     body: JSON.stringify({}),
   });
@@ -384,7 +404,7 @@ export async function getOrCreateCart(): Promise<ApiCart> {
 }
 
 export async function addCartItem(productId: number, quantity: number = 1, productAttributeId: number = 0): Promise<ApiCart> {
-  const json = await authFetch<{ data: ApiCart }>(`/v1/cart/items`, {
+  const json = await cartFetch<{ data: ApiCart }>(`/v1/cart/items`, {
     method: "POST",
     body: JSON.stringify({ id_product: productId, id_product_attribute: productAttributeId, quantity }),
   });
@@ -392,7 +412,7 @@ export async function addCartItem(productId: number, quantity: number = 1, produ
 }
 
 export async function updateCartItem(productId: number, quantity: number, productAttributeId: number = 0): Promise<ApiCart> {
-  const json = await authFetch<{ data: ApiCart }>(`/v1/cart/items/${productId}`, {
+  const json = await cartFetch<{ data: ApiCart }>(`/v1/cart/items/${productId}`, {
     method: "PUT",
     body: JSON.stringify({ quantity, id_product_attribute: productAttributeId }),
   });
@@ -400,9 +420,8 @@ export async function updateCartItem(productId: number, quantity: number, produc
 }
 
 export async function removeCartItem(productId: number, productAttributeId: number = 0): Promise<ApiCart> {
-  const json = await authFetch<{ data: ApiCart }>(`/v1/cart/items/${productId}`, {
+  const json = await cartFetch<{ data: ApiCart }>(`/v1/cart/items/${productId}?id_product_attribute=${productAttributeId}`, {
     method: "DELETE",
-    body: JSON.stringify({ quantity: 0, id_product_attribute: productAttributeId }),
   });
   return json.data;
 }
@@ -437,7 +456,8 @@ export async function deleteAddress(id: number): Promise<void> {
 // ─── Checkout (Auth Required) ────────────────────────────────
 
 export async function getCheckoutSummary(): Promise<ApiCheckoutSummary> {
-  return authFetch<ApiCheckoutSummary>("/v1/checkout/summary");
+  const res = await cartFetch<{ data: ApiCheckoutSummary }>("/v1/checkout/summary");
+  return res.data;
 }
 
 export async function setCheckoutAddresses(deliveryId: number, invoiceId?: number): Promise<any> {
@@ -458,6 +478,29 @@ export async function confirmCheckout(paymentMethod: string): Promise<any> {
   return authFetch("/v1/checkout/confirm", {
     method: "POST",
     body: JSON.stringify({ payment_method: paymentMethod }),
+  });
+}
+
+// ─── Guest Checkout ──────────────────────────────────────────
+
+export interface GuestCheckoutData {
+  email: string;
+  firstname: string;
+  lastname: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  postcode?: string;
+  id_country: number;
+  phone?: string;
+  id_carrier: number;
+  payment_method: string;
+}
+
+export async function guestCheckout(data: GuestCheckoutData): Promise<any> {
+  return apiFetch("/v1/checkout/guest-confirm", {
+    method: "POST",
+    body: JSON.stringify(data),
   });
 }
 
@@ -482,5 +525,40 @@ export async function getCarriers(): Promise<ApiCarrier[]> {
 
 export async function getCountries(): Promise<ApiCountry[]> {
   const res = await apiFetch<{ data: ApiCountry[] }>("/v1/countries", { cacheTtl: 600000 });
+  return res.data;
+}
+
+// ─── Guest Order Details (public) ────────────────────────────
+
+export interface ApiGuestOrderDetails {
+  id: number;
+  reference: string;
+  current_state: number;
+  payment: string;
+  total_products: number;
+  total_discounts: number;
+  total_shipping: number;
+  total_paid: number;
+  date_add: string;
+  customer: {
+    firstname: string;
+    lastname: string;
+    email: string;
+  } | null;
+  delivery_address: {
+    firstname: string;
+    lastname: string;
+    address1: string;
+    address2: string | null;
+    postcode: string | null;
+    city: string;
+    phone: string | null;
+    id_country: number;
+  } | null;
+  details: ApiOrderDetail[];
+}
+
+export async function getOrderByReference(orderId: number, reference: string): Promise<ApiGuestOrderDetails> {
+  const res = await apiFetch<{ data: ApiGuestOrderDetails }>(`/v1/checkout/order-details?id=${orderId}&ref=${encodeURIComponent(reference)}`);
   return res.data;
 }
