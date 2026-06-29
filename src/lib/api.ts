@@ -527,3 +527,38 @@ export async function getCountries(): Promise<ApiCountry[]> {
   const res = await apiFetch<{ data: ApiCountry[] }>("/v1/countries", { cacheTtl: 600000 });
   return res.data;
 }
+
+// ─── Guest Order Details (public) ────────────────────────────
+
+export interface ApiGuestOrderDetails {
+  id: number;
+  reference: string;
+  current_state: number;
+  payment: string;
+  total_products: number;
+  total_discounts: number;
+  total_shipping: number;
+  total_paid: number;
+  date_add: string;
+  customer: {
+    firstname: string;
+    lastname: string;
+    email: string;
+  } | null;
+  delivery_address: {
+    firstname: string;
+    lastname: string;
+    address1: string;
+    address2: string | null;
+    postcode: string | null;
+    city: string;
+    phone: string | null;
+    id_country: number;
+  } | null;
+  details: ApiOrderDetail[];
+}
+
+export async function getOrderByReference(orderId: number, reference: string): Promise<ApiGuestOrderDetails> {
+  const res = await apiFetch<{ data: ApiGuestOrderDetails }>(`/v1/checkout/order-details?id=${orderId}&ref=${encodeURIComponent(reference)}`);
+  return res.data;
+}

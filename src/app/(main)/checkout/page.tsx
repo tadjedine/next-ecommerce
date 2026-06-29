@@ -428,7 +428,7 @@ export default function CheckoutPage() {
 
             {/* Summary */}
             <div className="w-full lg:w-[400px] shrink-0">
-              <CheckoutSummary summary={null} items={items} />
+              <CheckoutSummary summary={summary} items={items} />
             </div>
           </div>
         </div>
