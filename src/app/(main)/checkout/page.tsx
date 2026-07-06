@@ -5,6 +5,7 @@ import { Check, Loader2, LogIn, UserPlus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { 
   ApiAddress, 
   ApiCarrier,
@@ -35,6 +36,7 @@ export default function CheckoutPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const { items, totalQuantity } = useCart();
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [mode, setMode] = useState<CheckoutMode>("choosing");
   const [currentStep, setCurrentStep] = useState<Step>(1);
@@ -73,13 +75,13 @@ export default function CheckoutPage() {
     if (isAuthenticated) {
       setMode("auth");
       if (totalQuantity === 0) {
-        router.push("/cart");
+        router.push("/");
       } else {
         initAuthCheckout();
       }
     } else {
       if (totalQuantity === 0) {
-        router.push("/cart");
+        router.push("/");
       } else {
         setMode("choosing");
         // Pre-fetch countries, carriers, and summary for guest checkout
@@ -213,7 +215,7 @@ export default function CheckoutPage() {
 
   if (authLoading || initialLoading) {
     return (
-      <div className="min-h-screen pt-32 pb-24 flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen pt-32 pb-24 flex items-center justify-center bg-bg-base">
         <Loader2 size={40} className="animate-spin text-primary" />
       </div>
     );
@@ -223,35 +225,35 @@ export default function CheckoutPage() {
 
   if (mode === "choosing") {
     return (
-      <main className="min-h-screen pt-32 pb-24 bg-slate-50">
+      <main className="min-h-screen pt-32 pb-24 bg-bg-base">
         <div className="max-w-lg mx-auto px-6">
           <div className="mb-10 text-center">
-            <h1 className="text-3xl font-extrabold text-navy">Checkout</h1>
-            <p className="text-slate-500 mt-2">How would you like to proceed?</p>
+            <h1 className="text-3xl font-extrabold text-text-primary">{t("checkout.title")}</h1>
+            <p className="text-text-muted mt-2">{t("checkout.proceed")}</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <button
               onClick={() => router.push("/auth")}
-              className="p-6 bg-white rounded-2xl border-2 border-slate-200 hover:border-primary hover:shadow-md hover:shadow-primary/10 transition-all text-left group"
+              className="p-6 bg-surface rounded-2xl border-2 border-border-soft hover:border-primary hover:shadow-md hover:shadow-primary/10 transition-all text-left group"
             >
               <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4 group-hover:bg-primary/10 transition-colors">
                 <LogIn size={22} className="text-primary" />
               </div>
-              <h3 className="font-bold text-navy text-lg mb-1">Sign In / Register</h3>
-              <p className="text-sm text-slate-500">
-                Use your existing account or create a new one to track orders and save addresses.
+              <h3 className="font-bold text-text-primary text-lg mb-1">{t("checkout.signin")}</h3>
+              <p className="text-sm text-text-muted">
+                {t("checkout.signin_desc")}
               </p>
             </button>
             <button
               onClick={() => { setMode("guest"); setCurrentStep(1); }}
-              className="p-6 bg-white rounded-2xl border-2 border-slate-200 hover:border-primary hover:shadow-md hover:shadow-primary/10 transition-all text-left group"
+              className="p-6 bg-surface rounded-2xl border-2 border-border-soft hover:border-primary hover:shadow-md hover:shadow-primary/10 transition-all text-left group"
             >
               <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mb-4 group-hover:bg-emerald-200 transition-colors">
                 <UserPlus size={22} className="text-emerald-600" />
               </div>
-              <h3 className="font-bold text-navy text-lg mb-1">Continue as Guest</h3>
-              <p className="text-sm text-slate-500">
-                Check out quickly without creating an account. Just provide your email and shipping info.
+              <h3 className="font-bold text-text-primary text-lg mb-1">{t("checkout.guest")}</h3>
+              <p className="text-sm text-text-muted">
+                {t("checkout.guest_desc")}
               </p>
             </button>
           </div>
@@ -264,22 +266,22 @@ export default function CheckoutPage() {
 
   if (mode === "guest") {
     const guestSteps = [
-      { num: 1, title: "Contact Info" },
-      { num: 2, title: "Shipping Address" },
-      { num: 3, title: "Delivery Method" },
-      { num: 4, title: "Payment" },
+      { num: 1, title: t("checkout.step_contact") },
+      { num: 2, title: t("checkout.step_shipping") },
+      { num: 3, title: t("checkout.step_delivery") },
+      { num: 4, title: t("checkout.step_payment") },
     ];
 
     return (
-      <main className="min-h-screen pt-32 pb-24 bg-slate-50">
+      <main className="min-h-screen pt-32 pb-24 bg-bg-base">
         <div className="max-w-6xl mx-auto px-6">
           <div className="mb-10 text-center">
-            <h1 className="text-3xl font-extrabold text-navy">Guest Checkout</h1>
+            <h1 className="text-3xl font-extrabold text-text-primary">{t("checkout.guest_title")}</h1>
             <button
               onClick={() => setMode("choosing")}
               className="text-sm text-primary hover:underline mt-2"
             >
-              ← Back to checkout options
+              {t("checkout.back_options")}
             </button>
           </div>
 
@@ -291,15 +293,15 @@ export default function CheckoutPage() {
                   const isCompleted = currentStep > step.num;
 
                   return (
-                    <div key={step.num} className={`bg-white rounded-2xl border ${isActive ? 'border-primary shadow-md shadow-primary/10' : 'border-slate-200 shadow-sm'} overflow-hidden transition-all duration-300`}>
+                    <div key={step.num} className={`bg-surface rounded-2xl border ${isActive ? 'border-primary shadow-md shadow-primary/10' : 'border-border-soft shadow-sm'} overflow-hidden transition-all duration-300`}>
                       <div
-                        className={`px-6 py-5 flex items-center gap-4 ${isCompleted ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+                        className={`px-6 py-5 flex items-center gap-4 ${isCompleted ? 'cursor-pointer hover:bg-bg-base' : ''}`}
                         onClick={() => { if (isCompleted) setCurrentStep(step.num as Step); }}
                       >
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-sm ${isCompleted ? 'bg-primary text-white' : isActive ? 'bg-blue-100 text-primary border-2 border-primary' : 'bg-slate-100 text-slate-400'}`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-sm ${isCompleted ? 'bg-primary text-white' : isActive ? 'bg-blue-100 text-primary border-2 border-primary' : 'bg-border-soft text-text-muted'}`}>
                           {isCompleted ? <Check size={16} className="stroke-[3]" /> : step.num}
                         </div>
-                        <h2 className={`text-lg font-bold ${isActive ? 'text-navy' : 'text-slate-500'}`}>
+                        <h2 className={`text-lg font-bold ${isActive ? 'text-text-primary' : 'text-text-muted'}`}>
                           {step.title}
                         </h2>
                       </div>
@@ -311,26 +313,26 @@ export default function CheckoutPage() {
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
                             transition={{ duration: 0.3 }}
-                            className="px-6 pb-6 pt-2 border-t border-slate-100"
+                            className="px-6 pb-6 pt-2 border-t border-border-soft"
                           >
                             {/* Step 1: Contact Info */}
                             {step.num === 1 && (
                               <div className="space-y-4">
                                 <div>
-                                  <label className="block text-xs font-semibold text-navy mb-1.5">Email Address</label>
-                                  <input type="email" required value={guestEmail} onChange={e => setGuestEmail(e.target.value)} placeholder="your@email.com" className="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+                                  <label className="block text-xs font-semibold text-text-primary mb-1.5">{t("checkout.email")}</label>
+                                  <input type="email" required value={guestEmail} onChange={e => setGuestEmail(e.target.value)} placeholder="your@email.com" className="w-full h-10 px-3 text-sm border border-border-soft rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
-                                    <label className="block text-xs font-semibold text-navy mb-1.5">First Name</label>
-                                    <input type="text" required value={guestFirstname} onChange={e => setGuestFirstname(e.target.value)} className="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+                                    <label className="block text-xs font-semibold text-text-primary mb-1.5">{t("checkout.firstname")}</label>
+                                    <input type="text" required value={guestFirstname} onChange={e => setGuestFirstname(e.target.value)} className="w-full h-10 px-3 text-sm border border-border-soft rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
                                   </div>
                                   <div>
-                                    <label className="block text-xs font-semibold text-navy mb-1.5">Last Name</label>
-                                    <input type="text" required value={guestLastname} onChange={e => setGuestLastname(e.target.value)} className="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+                                    <label className="block text-xs font-semibold text-text-primary mb-1.5">{t("checkout.lastname")}</label>
+                                    <input type="text" required value={guestLastname} onChange={e => setGuestLastname(e.target.value)} className="w-full h-10 px-3 text-sm border border-border-soft rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
                                   </div>
                                 </div>
-                                <div className="flex justify-end pt-4 border-t border-slate-100">
+                                <div className="flex justify-end pt-4 border-t border-border-soft">
                                   <button
                                     onClick={() => { if (guestEmail && guestFirstname && guestLastname) setCurrentStep(2); }}
                                     disabled={!guestEmail || !guestFirstname || !guestLastname}
@@ -346,39 +348,39 @@ export default function CheckoutPage() {
                             {step.num === 2 && (
                               <div className="space-y-4">
                                 <div>
-                                  <label className="block text-xs font-semibold text-navy mb-1.5">Address Line 1</label>
-                                  <input type="text" required value={guestAddress1} onChange={e => setGuestAddress1(e.target.value)} className="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+                                  <label className="block text-xs font-semibold text-text-primary mb-1.5">{t("checkout.address1")}</label>
+                                  <input type="text" required value={guestAddress1} onChange={e => setGuestAddress1(e.target.value)} className="w-full h-10 px-3 text-sm border border-border-soft rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
                                 </div>
                                 <div>
-                                  <label className="block text-xs font-semibold text-navy mb-1.5">Address Line 2 (Optional)</label>
-                                  <input type="text" value={guestAddress2} onChange={e => setGuestAddress2(e.target.value)} className="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+                                  <label className="block text-xs font-semibold text-text-primary mb-1.5">{t("checkout.address2")}</label>
+                                  <input type="text" value={guestAddress2} onChange={e => setGuestAddress2(e.target.value)} className="w-full h-10 px-3 text-sm border border-border-soft rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
-                                    <label className="block text-xs font-semibold text-navy mb-1.5">City</label>
-                                    <input type="text" required value={guestCity} onChange={e => setGuestCity(e.target.value)} className="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+                                    <label className="block text-xs font-semibold text-text-primary mb-1.5">{t("checkout.city")}</label>
+                                    <input type="text" required value={guestCity} onChange={e => setGuestCity(e.target.value)} className="w-full h-10 px-3 text-sm border border-border-soft rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
                                   </div>
                                   <div>
-                                    <label className="block text-xs font-semibold text-navy mb-1.5">Postcode</label>
-                                    <input type="text" value={guestPostcode} onChange={e => setGuestPostcode(e.target.value)} className="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+                                    <label className="block text-xs font-semibold text-text-primary mb-1.5">{t("checkout.postcode")}</label>
+                                    <input type="text" value={guestPostcode} onChange={e => setGuestPostcode(e.target.value)} className="w-full h-10 px-3 text-sm border border-border-soft rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
                                   </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
-                                    <label className="block text-xs font-semibold text-navy mb-1.5">Country</label>
-                                    <select required value={guestCountry} onChange={e => setGuestCountry(parseInt(e.target.value))} className="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white">
+                                    <label className="block text-xs font-semibold text-text-primary mb-1.5">{t("checkout.country")}</label>
+                                    <select required value={guestCountry} onChange={e => setGuestCountry(parseInt(e.target.value))} className="w-full h-10 px-3 text-sm border border-border-soft rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-surface">
                                       {countries.map(c => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                       ))}
                                     </select>
                                   </div>
                                   <div>
-                                    <label className="block text-xs font-semibold text-navy mb-1.5">Phone (Optional)</label>
-                                    <input type="text" value={guestPhone} onChange={e => setGuestPhone(e.target.value)} className="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+                                    <label className="block text-xs font-semibold text-text-primary mb-1.5">{t("checkout.phone")}</label>
+                                    <input type="text" value={guestPhone} onChange={e => setGuestPhone(e.target.value)} className="w-full h-10 px-3 text-sm border border-border-soft rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
                                   </div>
                                 </div>
-                                <div className="flex justify-between items-center pt-4 border-t border-slate-100">
-                                  <button onClick={() => setCurrentStep(1)} className="text-slate-500 font-semibold text-sm hover:text-navy transition-colors">Back</button>
+                                <div className="flex justify-between items-center pt-4 border-t border-border-soft">
+                                  <button onClick={() => setCurrentStep(1)} className="text-text-muted font-semibold text-sm hover:text-text-primary transition-colors">{t("checkout.back")}</button>
                                   <button
                                     onClick={() => { if (guestAddress1 && guestCity && guestCountry) setCurrentStep(3); }}
                                     disabled={!guestAddress1 || !guestCity || !guestCountry}
@@ -441,14 +443,14 @@ export default function CheckoutPage() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 overflow-hidden"
+                className="bg-surface rounded-2xl shadow-xl w-full max-w-md p-6 overflow-hidden"
               >
-                <h3 className="text-xl font-bold text-navy mb-2">Confirm Your Order</h3>
-                <p className="text-slate-600 mb-6">Are you sure you want to place this order? This action cannot be undone.</p>
+                <h3 className="text-xl font-bold text-text-primary mb-2">{t("checkout.confirm_title")}</h3>
+                <p className="text-text-muted mb-6">{t("checkout.confirm_desc")}</p>
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={() => setShowConfirmModal(false)}
-                    className="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors"
+                    className="px-5 py-2.5 text-sm font-semibold text-text-muted hover:bg-bg-base border border-border-soft rounded-xl transition-colors"
                   >
                     Cancel
                   </button>
@@ -472,17 +474,17 @@ export default function CheckoutPage() {
   // ── Auth Checkout Flow (existing) ─────────────────────────────
 
   const steps = [
-    { num: 1, title: "Shipping Address" },
-    { num: 2, title: "Delivery Method" },
-    { num: 3, title: "Payment" },
+    { num: 1, title: t("checkout.step_shipping") },
+    { num: 2, title: t("checkout.step_delivery") },
+    { num: 3, title: t("checkout.step_payment") },
   ];
 
   return (
-    <main className="min-h-screen pt-32 pb-24 bg-slate-50">
+    <main className="min-h-screen pt-32 pb-24 bg-bg-base">
       <div className="max-w-6xl mx-auto px-6">
         
         <div className="mb-10 text-center">
-          <h1 className="text-3xl font-extrabold text-navy">Checkout</h1>
+          <h1 className="text-3xl font-extrabold text-text-primary">{t("checkout.title")}</h1>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
@@ -494,15 +496,15 @@ export default function CheckoutPage() {
                 const isCompleted = currentStep > step.num;
 
                 return (
-                  <div key={step.num} className={`bg-white rounded-2xl border ${isActive ? 'border-primary shadow-md shadow-primary/10' : 'border-slate-200 shadow-sm'} overflow-hidden transition-all duration-300`}>
+                  <div key={step.num} className={`bg-surface rounded-2xl border ${isActive ? 'border-primary shadow-md shadow-primary/10' : 'border-border-soft shadow-sm'} overflow-hidden transition-all duration-300`}>
                     <div 
-                      className={`px-6 py-5 flex items-center gap-4 ${isCompleted ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+                      className={`px-6 py-5 flex items-center gap-4 ${isCompleted ? 'cursor-pointer hover:bg-bg-base' : ''}`}
                       onClick={() => { if (isCompleted) setCurrentStep(step.num as Step) }}
                     >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-sm ${isCompleted ? 'bg-primary text-white' : isActive ? 'bg-blue-100 text-primary border-2 border-primary' : 'bg-slate-100 text-slate-400'}`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-sm ${isCompleted ? 'bg-primary text-white' : isActive ? 'bg-blue-100 text-primary border-2 border-primary' : 'bg-border-soft text-text-muted'}`}>
                         {isCompleted ? <Check size={16} className="stroke-[3]" /> : step.num}
                       </div>
-                      <h2 className={`text-lg font-bold ${isActive ? 'text-navy' : 'text-slate-500'}`}>
+                      <h2 className={`text-lg font-bold ${isActive ? 'text-text-primary' : 'text-text-muted'}`}>
                         {step.title}
                       </h2>
                     </div>
@@ -514,7 +516,7 @@ export default function CheckoutPage() {
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="px-6 pb-6 pt-2 border-t border-slate-100"
+                          className="px-6 pb-6 pt-2 border-t border-border-soft"
                         >
                           {step.num === 1 && (
                             <CheckoutAddressStep 
@@ -571,14 +573,14 @@ export default function CheckoutPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 overflow-hidden"
+              className="bg-surface rounded-2xl shadow-xl w-full max-w-md p-6 overflow-hidden"
             >
-              <h3 className="text-xl font-bold text-navy mb-2">Confirm Your Order</h3>
-              <p className="text-slate-600 mb-6">Are you sure you want to place this order for {summary?.total?.toFixed(2)} €? This action cannot be undone.</p>
+              <h3 className="text-xl font-bold text-text-primary mb-2">{t("checkout.confirm_title")}</h3>
+              <p className="text-text-muted mb-6">Are you sure you want to place this order for {summary?.total?.toFixed(2)} €? This action cannot be undone.</p>
               <div className="flex justify-end gap-3">
                 <button 
                   onClick={() => setShowConfirmModal(false)}
-                  className="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors"
+                  className="px-5 py-2.5 text-sm font-semibold text-text-muted hover:bg-bg-base border border-border-soft rounded-xl transition-colors"
                 >
                   Cancel
                 </button>

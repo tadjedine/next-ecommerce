@@ -20,13 +20,13 @@ export default function CheckoutAddressStep({ addresses, selectedId, onSelect, o
           <div 
             key={addr.id}
             onClick={() => onSelect(addr.id)}
-            className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedId === addr.id ? 'border-primary bg-blue-50/50 shadow-sm' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
+            className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedId === addr.id ? 'border-primary bg-blue-50/50 shadow-sm' : 'border-border-soft hover:border-slate-300 bg-surface'}`}
           >
             <div className="flex items-center gap-2 mb-2">
-              <h4 className="font-bold text-navy text-sm">{addr.alias}</h4>
+              <h4 className="font-bold text-text-primary text-sm">{addr.alias}</h4>
             </div>
-            <div className="text-xs text-slate-600 space-y-0.5">
-              <p className="font-medium text-slate-800">{addr.firstname} {addr.lastname}</p>
+            <div className="text-xs text-text-muted space-y-0.5">
+              <p className="font-medium text-text-primary">{addr.firstname} {addr.lastname}</p>
               <p>{addr.address1}</p>
               <p>{addr.postcode} {addr.city}</p>
             </div>
@@ -40,14 +40,14 @@ export default function CheckoutAddressStep({ addresses, selectedId, onSelect, o
         
         <div 
           onClick={onAddNew}
-          className="p-4 rounded-xl border-2 border-dashed border-slate-300 hover:border-primary cursor-pointer transition-colors flex flex-col items-center justify-center text-slate-500 hover:text-primary bg-slate-50 min-h-[140px]"
+          className="p-4 rounded-xl border-2 border-dashed border-slate-300 hover:border-primary cursor-pointer transition-colors flex flex-col items-center justify-center text-text-muted hover:text-primary bg-bg-base min-h-[140px]"
         >
           <Plus size={24} className="mb-2" />
           <span className="font-semibold text-sm">Add New Address</span>
         </div>
       </div>
 
-      <div className="flex justify-end pt-4 border-t border-slate-100">
+      <div className="flex justify-end pt-4 border-t border-border-soft">
         <button 
           onClick={onNext}
           disabled={!selectedId || loading}

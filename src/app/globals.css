@@ -2,6 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --color-primary: #2B7FFF;
+    --color-primary-dark: #1A6FEF;
+    --color-accent: #F59E0B;
+    --color-surface: #FAFAF7;
+    --color-bg-base: #F5F5F0;
+    --color-text-primary: #0F172A;
+    --color-text-muted: #64748B;
+    --color-border-soft: #E5E3DE;
+  }
+
+  .dark {
+    --color-primary: #3B82F6;
+    --color-primary-dark: #2563EB;
+    --color-accent: #FBBF24;
+    --color-surface: #1E293B;
+    --color-bg-base: #0F172A;
+    --color-text-primary: #F1F5F9;
+    --color-text-muted: #94A3B8;
+    --color-border-soft: #334155;
+  }
+
+  body {
+    @apply bg-bg-base text-text-primary transition-colors duration-200;
+  }
+}
 
 .hide-scrollbar::-webkit-scrollbar { display: none; } 
 

@@ -31,12 +31,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refreshCart = useCallback(async () => {
-    // Only auto-load cart for authenticated users.
-    // For guests, the cart is populated on the first addItem call.
-    if (!isAuthenticated) {
-      setLoading(false);
-      return;
-    }
+    // Both authenticated users and guests can load a cart 
+    // because guests are tracked by a guest_session cookie.
     setLoading(true);
     try {
       const data = await getOrCreateCart();

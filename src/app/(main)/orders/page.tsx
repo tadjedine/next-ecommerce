@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import { Package, ChevronRight, Loader2, Search, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { ApiOrder, getOrders } from "@/lib/api";
 
 export default function OrdersPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   
   const [orders, setOrders] = useState<ApiOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,40 +67,40 @@ export default function OrdersPage() {
 
   if (authLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen pt-32 pb-24 flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen pt-32 pb-24 flex items-center justify-center bg-bg-base">
         <Loader2 size={40} className="animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen pt-32 pb-24 bg-slate-50">
+    <main className="min-h-screen pt-32 pb-24 bg-bg-base">
       <div className="max-w-5xl mx-auto px-6">
         
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/account" className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500 hover:text-navy">
+            <Link href="/account" className="p-2 hover:bg-slate-200 rounded-full transition-colors text-text-muted hover:text-text-primary">
               <ArrowLeft size={24} />
             </Link>
             <div>
-              <h1 className="text-3xl font-extrabold text-navy">Order History</h1>
-              <p className="text-slate-500">Check the status of recent orders, manage returns, and discover similar products.</p>
+              <h1 className="text-3xl font-extrabold text-text-primary">Order History</h1>
+              <p className="text-text-muted">Check the status of recent orders, manage returns, and discover similar products.</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-surface rounded-2xl shadow-sm border border-border-soft overflow-hidden">
           {/* Header/Filter Bar */}
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="p-4 border-b border-border-soft flex items-center justify-between bg-bg-base/50">
             <div className="relative w-full max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
               <input 
                 type="text" 
                 placeholder="Search orders..." 
-                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                className="w-full pl-10 pr-4 py-2 bg-surface border border-border-soft rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
-            <div className="hidden sm:block text-sm text-slate-500 font-medium">
+            <div className="hidden sm:block text-sm text-text-muted font-medium">
               {orders.length} Order{orders.length !== 1 ? 's' : ''}
             </div>
           </div>
@@ -109,11 +111,11 @@ export default function OrdersPage() {
             </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-20 px-4">
-              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+              <div className="w-20 h-20 bg-bg-base rounded-full flex items-center justify-center mx-auto mb-4 border border-border-soft">
                 <Package size={32} className="text-slate-300" />
               </div>
-              <h3 className="text-xl font-bold text-navy mb-2">No orders found</h3>
-              <p className="text-slate-500 mb-6">Looks like you haven't made any purchases yet.</p>
+              <h3 className="text-xl font-bold text-text-primary mb-2">No orders found</h3>
+              <p className="text-text-muted mb-6">Looks like you haven't made any purchases yet.</p>
               <Link href="/shop" className="inline-flex items-center gap-2 bg-primary text-white px-8 py-3 rounded-full font-bold hover:bg-primary-dark transition-colors">
                 Start Shopping
               </Link>
@@ -121,15 +123,15 @@ export default function OrdersPage() {
           ) : (
             <div className="divide-y divide-slate-100">
               {orders.map((order) => (
-                <div key={order.id} className="p-6 hover:bg-slate-50 transition-colors flex flex-col md:flex-row gap-6">
+                <div key={order.id} className="p-6 hover:bg-bg-base transition-colors flex flex-col md:flex-row gap-6">
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-3 mb-2">
-                      <h3 className="text-lg font-bold text-navy">Order {order.reference}</h3>
+                      <h3 className="text-lg font-bold text-text-primary">Order {order.reference}</h3>
                       <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${getStatusColor(order.current_state)}`}>
                         {getStatusText(order.current_state)}
                       </span>
                     </div>
-                    <div className="text-sm text-slate-500 flex flex-wrap gap-x-6 gap-y-2 mb-4">
+                    <div className="text-sm text-text-muted flex flex-wrap gap-x-6 gap-y-2 mb-4">
                       <p>Placed on: <span className="font-semibold text-slate-700">{new Date(order.date_add).toLocaleDateString()}</span></p>
                       <p>Total: <span className="font-semibold text-slate-700">{order.total_paid.toFixed(2)} €</span></p>
                       <p>Payment: <span className="font-semibold text-slate-700">{order.payment}</span></p>
@@ -137,7 +139,7 @@ export default function OrdersPage() {
                   </div>
                   
                   <div className="flex items-center md:justify-end gap-3 shrink-0">
-                    <button className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-semibold text-sm rounded-lg hover:border-slate-300 hover:bg-slate-50 transition-colors">
+                    <button className="px-5 py-2.5 bg-surface border border-border-soft text-slate-700 font-semibold text-sm rounded-lg hover:border-slate-300 hover:bg-bg-base transition-colors">
                       View Invoice
                     </button>
                     <Link 

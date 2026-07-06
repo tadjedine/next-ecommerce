@@ -1,4 +1,5 @@
 "use client";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Minus, Plus, Trash2, ShoppingBag, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -6,6 +7,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useCart } from "@/lib/CartContext";
 import { useAuth } from "@/lib/AuthContext";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -15,6 +17,7 @@ interface CartDrawerProps {
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, totalQuantity, subtotal, updateItem, removeItem, loading } = useCart();
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const handleUpdateQty = async (productId: number, productAttributeId: number, currentQty: number, delta: number) => {
@@ -64,7 +67,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           >
             <div className="flex items-center justify-between p-6 border-b border-border-soft">
               <div className="flex items-center gap-3">
-                <h2 className="text-xl font-extrabold text-text-primary">Your Cart</h2>
+                <h2 className="text-xl font-extrabold text-text-primary">{t("cart.title")}</h2>
                 <span className="bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-sm font-bold">
                   {totalQuantity}
                 </span>
@@ -87,13 +90,13 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   <div className="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-2">
                     <ShoppingBag size={32} />
                   </div>
-                  <h3 className="text-xl font-bold text-text-primary">Your cart is empty</h3>
-                  <p className="text-text-muted">Looks like you haven&apos;t added anything yet.</p>
+                  <h3 className="text-xl font-bold text-text-primary">{t("cart.empty")}</h3>
+                  <p className="text-text-muted">{t("cart.empty_desc")}</p>
                   <button 
                     onClick={onClose}
                     className="mt-4 px-8 py-3 bg-primary text-white rounded-full font-bold hover:bg-primary-dark transition-colors"
                   >
-                    Start Shopping
+                    {t("cart.start_shopping")}
                   </button>
                 </div>
               ) : (
@@ -138,7 +141,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                           
                           {item.reference && (
                             <div className="text-xs text-text-muted mb-2">
-                              Ref: {item.reference}
+                              {t("product.ref")}: {item.reference}
                             </div>
                           )}
                           
@@ -174,19 +177,19 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             {items.length > 0 && (
               <div className="p-6 border-t border-border-soft bg-surface">
                 <div className="flex items-center justify-between mb-6">
-                  <span className="font-semibold text-text-muted">Subtotal</span>
+                  <span className="font-semibold text-text-muted">{t("cart.subtotal")}</span>
                   <span className="text-xl font-extrabold text-text-primary">{subtotal.toFixed(2)} €</span>
                 </div>
                 
                 <div className="flex flex-col gap-3">
                   <Link href="/checkout" onClick={onClose} className="w-full py-4 bg-primary text-white rounded-full font-bold shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors text-center block">
-                    Checkout
+                    {t("cart.checkout")}
                   </Link>
                   <button 
                     onClick={onClose}
                     className="w-full py-3 text-sm font-semibold text-text-muted hover:text-text-primary transition-colors"
                   >
-                    Continue Shopping
+                    {t("cart.continue")}
                   </button>
                 </div>
               </div>
@@ -197,4 +200,3 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     </AnimatePresence>
   );
 }
-

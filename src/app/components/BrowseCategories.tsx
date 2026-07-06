@@ -1,20 +1,32 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { FadeUpOnScroll } from "./motion/FadeUpOnScroll";
 import { ApiCategory } from "@/lib/api";
 import Link from "next/link";
 import { Layers } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function BrowseCategories() {
   const [categories, setCategories] = useState<ApiCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+        const cookies = document.cookie.split("; ");
+        const localeCookie = cookies.find((row) => row.startsWith("locale="));
+        const locale = localeCookie ? localeCookie.split("=")[1] : "en";
+
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/v1/categories/main`
+          `${process.env.NEXT_PUBLIC_API_URL}/v1/categories/main`,
+          {
+            headers: {
+              "Accept-Language": locale,
+            },
+          }
         );
         const json = await res.json();
         // Filter out root categories and unnamed
@@ -38,8 +50,10 @@ export default function BrowseCategories() {
       <div className="py-24 bg-surface overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 mb-12">
           <FadeUpOnScroll className="text-center">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary mb-2">Shop by Category</h2>
-            <p className="text-text-muted text-lg">Find exactly what you&apos;re looking for.</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary mb-2">
+              {t("categories.title")}
+            </h2>
+            <p className="text-text-muted text-lg">{t("categories.subtitle")}</p>
           </FadeUpOnScroll>
         </div>
         <div className="w-full flex overflow-x-auto md:overflow-visible scrollbar-hide pb-8 px-6 md:px-12 gap-6 snap-x snap-mandatory md:snap-none md:flex-wrap md:justify-center">
@@ -69,8 +83,10 @@ export default function BrowseCategories() {
     <div className="py-24 bg-surface overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 mb-12">
         <FadeUpOnScroll className="text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary mb-2">Shop by Category</h2>
-          <p className="text-text-muted text-lg">Find exactly what you&apos;re looking for.</p>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary mb-2">
+            {t("categories.title")}
+          </h2>
+          <p className="text-text-muted text-lg">{t("categories.subtitle")}</p>
         </FadeUpOnScroll>
       </div>
 
