@@ -21,6 +21,8 @@ import {
   ApiCountry,
   guestCheckout,
   GuestCheckoutData,
+  createStripeSession,
+  createGuestStripeSession,
 } from "@/lib/api";
 
 import CheckoutAddressStep from "@/app/components/checkout/CheckoutAddressStep";
@@ -172,8 +174,15 @@ export default function CheckoutPage() {
     setShowConfirmModal(false);
     setLoading(true);
     try {
-      const res = await confirmCheckout(selectedPayment);
-      router.push(`/checkout/confirmation?id=${res.order_id}&ref=${res.reference}`);
+      if (selectedPayment === 'cash_on_delivery') {
+        // COD: create order immediately (existing flow)
+        const res = await confirmCheckout(selectedPayment);
+        router.push(`/checkout/confirmation?id=${res.order_id}&ref=${res.reference}`);
+      } else {
+        // Online payment: redirect to Stripe's hosted checkout page
+        const res = await createStripeSession();
+        window.location.href = res.url;
+      }
     } catch (err: any) {
       console.error(err);
       alert(err.message || "Failed to place order.");
@@ -202,8 +211,15 @@ export default function CheckoutPage() {
         id_carrier: guestCarrier,
         payment_method: guestPayment,
       };
-      const res = await guestCheckout(data);
-      router.push(`/checkout/confirmation?id=${res.order_id}&ref=${res.reference}`);
+      if (guestPayment === 'cash_on_delivery') {
+        // COD: create order immediately (existing flow)
+        const res = await guestCheckout(data);
+        router.push(`/checkout/confirmation?id=${res.order_id}&ref=${res.reference}`);
+      } else {
+        // Online payment: redirect to Stripe's hosted checkout page
+        const res = await createGuestStripeSession(data);
+        window.location.href = res.url;
+      }
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Failed to place order. Please try again.");

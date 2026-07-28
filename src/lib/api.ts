@@ -512,6 +512,29 @@ export async function guestCheckout(data: GuestCheckoutData): Promise<any> {
   });
 }
 
+// ─── Stripe Checkout ─────────────────────────────────────────
+
+export async function createStripeSession(): Promise<{ url: string }> {
+  return authFetch("/v1/checkout/stripe/session", {
+    method: "POST",
+  });
+}
+
+export async function createGuestStripeSession(data: GuestCheckoutData): Promise<{ url: string }> {
+  return apiFetch("/v1/checkout/guest-stripe-session", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getStripeSessionStatus(sessionId: string): Promise<{
+  status: "complete" | "processing" | "unpaid";
+  message?: string;
+  data?: ApiGuestOrderDetails;
+}> {
+  return apiFetch(`/v1/checkout/session-status?session_id=${encodeURIComponent(sessionId)}`);
+}
+
 // ─── Orders (Auth Required) ──────────────────────────────────
 
 export async function getOrders(): Promise<ApiOrder[]> {

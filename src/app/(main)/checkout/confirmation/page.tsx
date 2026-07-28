@@ -5,10 +5,11 @@ import Link from "next/link";
 import { CheckCircle2, ArrowRight, X, Loader2, ShoppingBag, User, MapPin, Mail, Phone, Receipt, CreditCard, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/lib/CartContext";
-import { ApiGuestOrderDetails, getOrderByReference } from "@/lib/api";
+import { ApiGuestOrderDetails, getOrderByReference, getStripeSessionStatus } from "@/lib/api";
 
 function ConfirmationContent() {
   const searchParams = useSearchParams();
+  const sessionId = searchParams.get("session_id");
   const id = searchParams.get("id");
   const reference = searchParams.get("ref");
   const router = useRouter();
@@ -18,25 +19,65 @@ function ConfirmationContent() {
   const [showSummary, setShowSummary] = useState(false);
   const [orderDetails, setOrderDetails] = useState<ApiGuestOrderDetails | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  // Stripe-specific state
+  const [orderReference, setOrderReference] = useState<string | null>(reference);
+  const [orderId, setOrderId] = useState<string | null>(id);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    if (!id || !reference) {
-      router.push("/");
-    } else {
-      // Clear the cart immediately after placing an order
+
+    if (sessionId) {
+      // Stripe flow: poll for order creation
       clearCart();
+      setIsProcessing(true);
+      let attempts = 0;
+      const maxAttempts = 15; // 30 seconds max
+
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        try {
+          const result = await getStripeSessionStatus(sessionId);
+          if (result.status === "complete" && result.data) {
+            clearInterval(pollInterval);
+            setOrderReference(result.data.reference);
+            setOrderId(String(result.data.id));
+            setOrderDetails(result.data);
+            setIsProcessing(false);
+          } else if (result.status === "unpaid") {
+            clearInterval(pollInterval);
+            router.push("/checkout");
+          } else if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            setIsProcessing(false);
+            // Order will eventually be created by webhook — show a fallback message
+          }
+        } catch (err) {
+          console.error("Failed to poll session status:", err);
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            setIsProcessing(false);
+          }
+        }
+      }, 2000);
+
+      return () => clearInterval(pollInterval);
+    } else if (id && reference) {
+      // COD flow: order already exists
+      clearCart();
+    } else {
+      router.push("/");
     }
-  }, [id, reference, router, clearCart]);
+  }, [sessionId, id, reference, router, clearCart]);
 
   const handleViewSummary = async () => {
-    if (!id || !reference) return;
+    if (!orderId || !orderReference) return;
     setShowSummary(true);
 
     if (!orderDetails) {
       setDetailsLoading(true);
       try {
-        const data = await getOrderByReference(Number(id), reference);
+        const data = await getOrderByReference(Number(orderId), orderReference);
         setOrderDetails(data);
       } catch (err) {
         console.error("Failed to load order details:", err);
@@ -56,6 +97,7 @@ function ConfirmationContent() {
       case 8: return "Error";
       case 10: return "Awaiting Bank Wire";
       case 13: return "Awaiting Cash on Delivery";
+      case 14: return "Awaiting Payment";
       default: return `Status #${stateId}`;
     }
   };
@@ -71,7 +113,36 @@ function ConfirmationContent() {
     }
   };
 
-  if (!mounted || !id || !reference) return null;
+  if (!mounted) return null;
+  
+  // Redirect if no valid params
+  if (!sessionId && (!id || !reference)) return null;
+
+  // Processing state — waiting for webhook to create order
+  if (isProcessing) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-100 p-8 md:p-12 text-center relative overflow-hidden"
+      >
+        <div className="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+        
+        <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-8">
+          <Loader2 size={40} className="animate-spin text-primary" />
+        </div>
+
+        <h1 className="text-3xl md:text-4xl font-extrabold text-navy mb-4">Processing your payment...</h1>
+        <p className="text-lg text-slate-500 mb-8">
+          Your payment was successful! We&apos;re creating your order now. This will only take a moment.
+        </p>
+      </motion.div>
+    );
+  }
+
+  // Show the reference from either flow
+  const displayReference = orderReference || reference;
+  if (!displayReference) return null;
 
   return (
     <>
@@ -94,7 +165,7 @@ function ConfirmationContent() {
         <div className="bg-slate-50 rounded-2xl p-6 mb-10 flex items-center justify-center border border-slate-100">
           <div className="text-center">
             <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1">Order Reference</p>
-            <p className="text-xl font-bold text-navy font-mono">{reference}</p>
+            <p className="text-xl font-bold text-navy font-mono">{displayReference}</p>
           </div>
         </div>
 
