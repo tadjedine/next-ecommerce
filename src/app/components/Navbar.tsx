@@ -1,11 +1,14 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import { ChevronDown, Globe, Moon, ShoppingCart, Shirt, Gem, Tag, ArrowRight, User, LogOut, FileText } from "lucide-react";
+import { ChevronDown, Moon, Sun, ShoppingCart, Shirt, Gem, Tag, ArrowRight, User, LogOut, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CartDrawer from "./cart/CartDrawer";
 import { useCart } from "@/lib/CartContext";
 import { useAuth } from "@/lib/AuthContext";
+import { useTheme } from "@/lib/ThemeContext";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const MegaMenu = ({ isOpen, onMouseEnter, onMouseLeave }: { isOpen: boolean; onMouseEnter: () => void; onMouseLeave: () => void }) => {
   return (
@@ -103,11 +106,15 @@ export default function Navbar() {
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
   
   const { totalQuantity } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
+  const { locale, setLocale, t } = useLanguage();
   
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const langMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -117,11 +124,14 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close user dropdown if clicked outside
+  // Close user and language dropdowns if clicked outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setUserMenuOpen(false);
+      }
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
+        setLangMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -143,17 +153,76 @@ export default function Navbar() {
               onMouseEnter={() => setMegaMenuOpen(true)}
               onMouseLeave={() => setMegaMenuOpen(false)}
             >
-              Shop <ChevronDown size={16} />
+              {t("nav.shop")} <ChevronDown size={16} />
             </div>
-            <Link href="/shop/sale" className="text-text-muted hover:text-text-primary font-medium transition-colors">Sale</Link>
-            <Link href="/" className="text-text-muted hover:text-text-primary font-medium transition-colors">About</Link>
+            <Link href="/shop/sale" className="text-text-muted hover:text-text-primary font-medium transition-colors">{t("nav.sale")}</Link>
+            <Link href="/" className="text-text-muted hover:text-text-primary font-medium transition-colors">{t("nav.about")}</Link>
           </div>
 
           <div className="flex items-center gap-4 text-text-muted relative">
             <div className="hidden lg:flex items-center gap-4">
               <span className="text-sm font-medium">EUR</span>
-              <Globe size={20} className="cursor-pointer hover:text-text-primary transition-colors" />
-              <Moon size={20} className="cursor-pointer hover:text-text-primary transition-colors" />
+              <div className="relative" ref={langMenuRef}>
+                <button
+                  onClick={() => setLangMenuOpen(!langMenuOpen)}
+                  className="cursor-pointer hover:text-text-primary transition-colors flex items-center gap-1.5 p-1 rounded-full hover:bg-bg-base/50"
+                  aria-label="Select language"
+                >
+                  {/* <Globe size={20} /> */}
+                  <span className="text-xs font-bold uppercase flex items-center gap-1.5">
+                    <Image
+                      src={locale === "en" ? "https://flagcdn.com/gb.svg" : "https://flagcdn.com/fr.svg"}
+                      alt={locale}
+                      width={16}
+                      height={12}
+                      className="rounded-sm object-cover shadow-sm"
+                    />
+                    {locale}
+                  </span>
+                </button>
+
+                <AnimatePresence>
+                  {langMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-3 w-36 bg-surface rounded-xl shadow-xl border border-border-soft overflow-hidden z-50 p-1 flex flex-col gap-1"
+                    >
+                      <button
+                        onClick={() => {
+                          setLocale("en");
+                          setLangMenuOpen(false);
+                        }}
+                        className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors text-left flex items-center gap-2.5 ${
+                          locale === "en"
+                            ? "bg-primary text-white"
+                            : "text-text-muted hover:bg-bg-base hover:text-text-primary"
+                        }`}
+                      >
+                        <Image src="https://flagcdn.com/gb.svg" alt="UK" width={18} height={14} className="rounded-sm object-cover shadow-sm" /> English
+                      </button>
+                      <button
+                        onClick={() => {
+                          setLocale("fr");
+                          setLangMenuOpen(false);
+                        }}
+                        className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors text-left flex items-center gap-2.5 ${
+                          locale === "fr"
+                            ? "bg-primary text-white"
+                            : "text-text-muted hover:bg-bg-base hover:text-text-primary"
+                        }`}
+                      >
+                        <Image src="https://flagcdn.com/fr.svg" alt="France" width={18} height={14} className="rounded-sm object-cover shadow-sm" /> Français
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              <button onClick={toggleTheme} className="cursor-pointer hover:text-text-primary transition-colors p-1 rounded-full hover:bg-bg-base/50" aria-label="Toggle theme">
+                {isDark ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
               <div className="w-px h-6 bg-border-soft"></div>
             </div>
             <div 
@@ -170,11 +239,11 @@ export default function Navbar() {
               <div className="relative ml-4" ref={userMenuRef}>
                 <button 
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors text-primary font-bold shadow-sm border border-slate-200"
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-bg-base hover:bg-bg-base/80 transition-colors text-primary font-bold shadow-sm border border-border-soft"
                 >
                   {user?.firstname ? user.firstname.charAt(0).toUpperCase() : <User size={20} />}
                 </button>
-
+ 
                 <AnimatePresence>
                   {userMenuOpen && (
                     <motion.div
@@ -182,36 +251,36 @@ export default function Navbar() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-3 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden"
+                      className="absolute right-0 top-full mt-3 w-64 bg-surface rounded-xl shadow-xl border border-border-soft overflow-hidden"
                     >
-                      <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-                        <p className="font-bold text-navy text-sm">Hi, {user?.firstname}!</p>
-                        <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                      <div className="px-5 py-4 border-b border-border-soft bg-bg-base/50">
+                        <p className="font-bold text-text-primary text-sm">{t("nav.hi", { name: user?.firstname || "" })}</p>
+                        <p className="text-xs text-text-muted truncate">{user?.email}</p>
                       </div>
                       <div className="p-2 flex flex-col">
                         <Link 
                           href="/account" 
                           onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-primary hover:bg-blue-50 transition-colors"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-text-muted hover:text-primary hover:bg-bg-base transition-colors"
                         >
-                          <User size={16} /> My Account
+                          <User size={16} /> {t("nav.my_account")}
                         </Link>
                         <Link 
                           href="/orders" 
                           onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-primary hover:bg-blue-50 transition-colors"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-text-muted hover:text-primary hover:bg-bg-base transition-colors"
                         >
-                          <FileText size={16} /> Orders
+                          <FileText size={16} /> {t("nav.orders")}
                         </Link>
-                        <div className="h-px bg-slate-100 my-1 mx-2"></div>
+                        <div className="h-px bg-border-soft my-1 mx-2"></div>
                         <button 
                           onClick={() => {
                             setUserMenuOpen(false);
                             logout();
                           }}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors w-full text-left"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-500/10 transition-colors w-full text-left"
                         >
-                          <LogOut size={16} /> Logout
+                          <LogOut size={16} /> {t("nav.logout")}
                         </button>
                       </div>
                     </motion.div>
@@ -220,7 +289,7 @@ export default function Navbar() {
               </div>
             ) : (
               <Link href="/auth" className="hidden sm:flex ml-4 bg-primary text-white px-6 py-2.5 rounded-full font-medium hover:bg-primary-dark transition-colors">
-                Sign In
+                {t("nav.sign_in")}
               </Link>
             )}
           </div>

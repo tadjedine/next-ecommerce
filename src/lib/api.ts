@@ -256,6 +256,13 @@ interface ApiFetchOptions extends RequestInit {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
+function getLocaleFromCookie(): string {
+  if (typeof document === "undefined") return "en";
+  const cookies = document.cookie.split("; ");
+  const localeCookie = cookies.find((row) => row.startsWith("locale="));
+  return localeCookie ? localeCookie.split("=")[1] : "en";
+}
+
 async function apiFetch<T>(endpoint: string, options?: ApiFetchOptions): Promise<T> {
   const cacheKey = `${options?.method || "GET"}:${endpoint}`;
   
@@ -273,6 +280,7 @@ async function apiFetch<T>(endpoint: string, options?: ApiFetchOptions): Promise
     headers: {
       "Accept": "application/json",
       "Content-Type": "application/json",
+      "Accept-Language": getLocaleFromCookie(),
       ...options?.headers,
     },
     credentials: "include",

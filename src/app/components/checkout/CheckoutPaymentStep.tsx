@@ -14,8 +14,8 @@ export default function CheckoutPaymentStep({ selectedMethod, onSelect, onNext, 
     <div className="space-y-6">
       <PaymentSelector selectedMethod={selectedMethod} onSelect={onSelect} />
       
-      <div className="flex justify-between items-center pt-4 border-t border-slate-100">
-        <button onClick={onBack} className="text-slate-500 font-semibold text-sm hover:text-navy transition-colors">
+      <div className="flex justify-between items-center pt-4 border-t border-border-soft">
+        <button onClick={onBack} className="text-text-muted font-semibold text-sm hover:text-text-primary transition-colors">
           Back
         </button>
         <button 

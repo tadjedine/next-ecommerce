@@ -13,7 +13,7 @@ interface CatalogLayoutProps {
   productCount: number;
   apiFilters: ApiFiltersResponse;
   filterState: FilterState;
-  onFilterChange: (state: FilterState) => void;
+  onFilterChange: React.Dispatch<React.SetStateAction<FilterState>>;
   onClearFilters: () => void;
   sort: string;
   onSortChange: (sort: string) => void;

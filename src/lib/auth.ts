@@ -55,11 +55,19 @@ export function dispatchAuthExpired() {
 
 // ─── Authenticated Fetch ─────────────────────────────────────
 
+function getLocaleFromCookie(): string {
+  if (typeof document === "undefined") return "en";
+  const cookies = document.cookie.split("; ");
+  const localeCookie = cookies.find((row) => row.startsWith("locale="));
+  return localeCookie ? localeCookie.split("=")[1] : "en";
+}
+
 export async function authFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const token = getAuthToken();
   const headers = new Headers(options?.headers);
   headers.set("Accept", "application/json");
   headers.set("Content-Type", "application/json");
+  headers.set("Accept-Language", getLocaleFromCookie());
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }

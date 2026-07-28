@@ -22,6 +22,10 @@ const nextConfig = {
         {
             protocol: 'http',
             hostname: 'prestashop.test'
+        },
+        {
+            protocol: 'https',
+            hostname: 'flagcdn.com'
         }
        ],
     },

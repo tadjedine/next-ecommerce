@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { ApiCategory } from "@/lib/api";
 
@@ -9,8 +10,17 @@ export default function Marquee() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+        const cookies = document.cookie.split("; ");
+        const localeCookie = cookies.find((row) => row.startsWith("locale="));
+        const locale = localeCookie ? localeCookie.split("=")[1] : "en";
+
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/v1/categories?per_page=50`
+          `${process.env.NEXT_PUBLIC_API_URL}/v1/categories?per_page=50`,
+          {
+            headers: {
+              "Accept-Language": locale,
+            },
+          }
         );
         const json = await res.json();
         const items = Array.isArray(json.data) ? json.data : [];
@@ -31,16 +41,16 @@ export default function Marquee() {
 
   if (loading || categories.length === 0) {
     return (
-      <div className="w-full border-y border-slate-100 bg-white overflow-hidden py-4 flex relative">
+      <div className="w-full border-y border-border-soft bg-surface overflow-hidden py-4 flex relative">
         <div className="flex whitespace-nowrap animate-marquee">
           {[...Array(2)].map((_, arrayIndex) => (
             <div key={arrayIndex} className="flex shrink-0">
               {["Loading…"].map((item, i) => (
                 <div key={`${arrayIndex}-${i}`} className="flex items-center">
-                  <span className="text-sm font-semibold text-slate-gray uppercase tracking-widest px-8">
+                  <span className="text-sm font-semibold text-text-muted uppercase tracking-widest px-8">
                     {item}
                   </span>
-                  <span className="text-slate-300">•</span>
+                  <span className="text-border-soft">•</span>
                 </div>
               ))}
             </div>
@@ -51,16 +61,16 @@ export default function Marquee() {
   }
 
   return (
-    <div className="w-full border-y border-slate-100 bg-white overflow-hidden py-4 flex relative">
+    <div className="w-full border-y border-border-soft bg-surface overflow-hidden py-4 flex relative">
       <div className="flex whitespace-nowrap animate-marquee">
         {[...Array(2)].map((_, arrayIndex) => (
           <div key={arrayIndex} className="flex shrink-0">
             {categories.map((cat, i) => (
               <div key={`${arrayIndex}-${i}`} className="flex items-center">
-                <span className="text-sm font-semibold text-slate-gray uppercase tracking-widest px-8">
+                <span className="text-sm font-semibold text-text-muted uppercase tracking-widest px-8">
                   {cat.name}
                 </span>
-                <span className="text-slate-300">•</span>
+                <span className="text-border-soft">•</span>
               </div>
             ))}
           </div>

@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -11,17 +12,17 @@ const config: Config = {
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-        "bg-hero": "linear-gradient(135deg, #F0EDE8 0%, #EBE8E3 100%)",
+        "bg-hero": "linear-gradient(135deg, var(--color-bg-gradient-start) 0%, var(--color-bg-gradient-end) 100%)",
       },
       colors: {
-        primary: "#2B7FFF",
-        "primary-dark": "#1A6FEF",
-        accent: "#F59E0B",
-        surface: "#FAFAF7",
-        "bg-base": "#F5F5F0",
-        "text-primary": "#0F172A",
-        "text-muted": "#64748B",
-        "border-soft": "#E5E3DE",
+        primary: "var(--color-primary)",
+        "primary-dark": "var(--color-primary-dark)",
+        accent: "var(--color-accent)",
+        surface: "var(--color-surface)",
+        "bg-base": "var(--color-bg-base)",
+        "text-primary": "var(--color-text-primary)",
+        "text-muted": "var(--color-text-muted)",
+        "border-soft": "var(--color-border-soft)",
         
         // Keeping previous colors for backward compatibility in case they are used in Navbar/etc
         CartRed: "#E43023",
@@ -29,8 +30,8 @@ const config: Config = {
         navy: "#0F172A",
         "slate-gray": "#64748B",
         "orange-accent": "#F97316",
-        "bg-gradient-start": "#EFEDE8",
-        "bg-gradient-end": "#EBE8E3",
+        "bg-gradient-start": "var(--color-bg-gradient-start)",
+        "bg-gradient-end": "var(--color-bg-gradient-end)",
       },
       keyframes: {
         marquee: {

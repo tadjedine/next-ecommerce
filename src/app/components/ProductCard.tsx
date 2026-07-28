@@ -1,4 +1,5 @@
 "use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo } from "react";
@@ -6,9 +7,11 @@ import { ApiProduct } from "@/lib/api";
 import { HoverLift } from "./motion/HoverLift";
 import { Heart, ImageOff, Check, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function ProductCard({ product }: { product: ApiProduct }) {
   const { addItem } = useCart();
+  const { t } = useLanguage();
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
 
@@ -103,12 +106,12 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
       {/* Sale Badge */}
       {product.on_sale && (
         <div className="absolute top-5 left-5 z-10 bg-accent text-white text-xs font-bold px-3 py-1 rounded-full shadow-md uppercase tracking-wider">
-          Promo
+          {t("product.promo")}
         </div>
       )}
 
       {/* Wishlist Icon */}
-      <button className="absolute top-5 right-5 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:text-red-500 text-text-muted">
+      <button className="absolute top-5 right-5 z-10 p-2 bg-surface/80 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:text-red-500 text-text-muted">
         <Heart size={18} />
       </button>
 
@@ -141,13 +144,13 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
               <>
                 <button
                   onClick={handlePrev}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/30 dark:bg-black/30 backdrop-blur-md rounded-full text-text-primary border border-border-soft hover:bg-primary hover:text-white transition-all shadow-sm opacity-0 group-hover/image:opacity-100 z-10"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-surface/30 dark:bg-black/30 backdrop-blur-md rounded-full text-text-primary border border-border-soft hover:bg-primary hover:text-white transition-all shadow-sm opacity-0 group-hover/image:opacity-100 z-10"
                 >
                   <ChevronLeft size={16} />
                 </button>
                 <button
                   onClick={handleNext}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/30 dark:bg-black/30 backdrop-blur-md rounded-full text-text-primary border border-border-soft hover:bg-primary hover:text-white transition-all shadow-sm opacity-0 group-hover/image:opacity-100 z-10"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-surface/30 dark:bg-black/30 backdrop-blur-md rounded-full text-text-primary border border-border-soft hover:bg-primary hover:text-white transition-all shadow-sm opacity-0 group-hover/image:opacity-100 z-10"
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -190,12 +193,12 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
             {product.name}
           </Link>
           {product.quantity > 0 ? (
-            <div className="flex items-center text-xs text-text-muted gap-1 ml-2 shrink-0 bg-emerald-50 text-emerald-600 px-2 py-1 rounded-lg">
-              In Stock
+            <div className="flex items-center text-xs gap-1 ml-2 shrink-0 bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded-lg">
+              {t("product.in_stock")}
             </div>
           ) : (
-            <div className="flex items-center text-xs gap-1 ml-2 shrink-0 bg-red-50 text-red-500 px-2 py-1 rounded-lg">
-              Out of Stock
+            <div className="flex items-center text-xs gap-1 ml-2 shrink-0 bg-red-500/10 text-red-500 px-2 py-1 rounded-lg">
+              {t("product.out_of_stock")}
             </div>
           )}
         </div>
@@ -215,13 +218,13 @@ export default function ProductCard({ product }: { product: ApiProduct }) {
         disabled={product.quantity <= 0 || adding}
       >
         {adding ? (
-          <><Loader2 size={16} className="animate-spin" /> Adding...</>
+          <><Loader2 size={16} className="animate-spin" /> {t("cart.adding")}</>
         ) : added ? (
-          <><Check size={16} /> Added!</>
+          <><Check size={16} /> {t("cart.added")}</>
         ) : product.quantity > 0 ? (
-          "Add to Cart"
+          t("cart.add")
         ) : (
-          "Unavailable"
+          t("cart.unavailable")
         )}
       </button>
     </HoverLift>
