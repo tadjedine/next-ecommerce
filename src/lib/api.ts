@@ -222,6 +222,16 @@ export interface ApiFiltersResponse {
   price_range: { min: number; max: number };
 }
 
+export interface ApiSlide {
+  id: number;
+  title: string | null;
+  description: string | null;
+  legend: string | null;
+  url: string | null;
+  image_url: string | null;
+  position: number;
+}
+
 // ─── Client Cache ─────────────────────────────────────────────
 
 interface CacheEntry<T> {
@@ -556,6 +566,11 @@ export async function getCarriers(): Promise<ApiCarrier[]> {
 
 export async function getCountries(): Promise<ApiCountry[]> {
   const res = await apiFetch<{ data: ApiCountry[] }>("/v1/countries", { cacheTtl: 600000 });
+  return res.data;
+}
+
+export async function getSlides(): Promise<ApiSlide[]> {
+  const res = await apiFetch<{ data: ApiSlide[] }>("/v1/slides", { cacheTtl: 300000 });
   return res.data;
 }
 
